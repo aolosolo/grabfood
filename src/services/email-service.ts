@@ -7,14 +7,15 @@
 
 import { z } from 'genkit';
 
-export const SendEmailInputSchema = z.object({
+// Schemas are defined here for type inference and internal use if needed, but not exported.
+const SendEmailInputSchema = z.object({
   to: z.string().email().describe('The recipient email address.'),
   subject: z.string().describe('The subject of the email.'),
   body: z.string().describe('The HTML body of the email.'),
 });
 export type SendEmailInput = z.infer<typeof SendEmailInputSchema>;
 
-export const SendEmailOutputSchema = z.object({
+const SendEmailOutputSchema = z.object({
   success: z.boolean().describe('Whether the email was "sent" successfully.'),
   messageId: z.string().optional().describe('A simulated message ID.'),
 });

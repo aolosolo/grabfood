@@ -9,10 +9,24 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { sendEmail, SendEmailInputSchema, SendEmailOutputSchema } from '@/services/email-service';
+import { sendEmail } from '@/services/email-service';
+import type { SendEmailInput, SendEmailOutput } from '@/services/email-service'; // Import types
 import type { OrderDetailsForEmail } from '@/lib/types';
 
 const ADMIN_EMAIL = 'abdulwahab10101a@gmail.com';
+
+// Define Schemas for the email tool input and output locally
+const SendEmailInputSchema = z.object({
+  to: z.string().email().describe('The recipient email address.'),
+  subject: z.string().describe('The subject of the email.'),
+  body: z.string().describe('The HTML body of the email.'),
+});
+
+const SendEmailOutputSchema = z.object({
+  success: z.boolean().describe('Whether the email was "sent" successfully.'),
+  messageId: z.string().optional().describe('A simulated message ID.'),
+});
+
 
 const OrderItemSchema = z.object({
   name: z.string(),
@@ -43,10 +57,10 @@ const sendEmailTool = ai.defineTool(
   {
     name: 'sendEmailTool',
     description: 'Sends an email. Use this to notify admin about a new order.',
-    inputSchema: SendEmailInputSchema,
-    outputSchema: SendEmailOutputSchema,
+    inputSchema: SendEmailInputSchema, // Use locally defined schema
+    outputSchema: SendEmailOutputSchema, // Use locally defined schema
   },
-  async (input) => sendEmail(input)
+  async (input: SendEmailInput) => sendEmail(input) // Type annotation for input
 );
 
 
@@ -101,7 +115,7 @@ const orderConfirmationEmailFlow = ai.defineFlow(
     `;
 
     try {
-      const emailResult = await sendEmailTool({
+      const emailResult: SendEmailOutput = await sendEmailTool({ // Ensure result type matches
         to: ADMIN_EMAIL,
         subject,
         body,
