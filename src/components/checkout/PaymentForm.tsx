@@ -7,8 +7,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useOrder } from '@/context/OrderContext';
 import { Button } from '@/components/ui/button';
-// Input is not directly used here for CVV, but kept for CreditCardDisplay
-// import { Input } from '@/components/ui/input'; 
 import { Label } from '@/components/ui/label'; // Used by CreditCardDisplay and potentially FormLabel
 import CreditCardDisplay from './CreditCardDisplay';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -35,7 +33,6 @@ export default function PaymentForm() {
   const { setPaymentDetails, getCartTotal } = useOrder();
   const router = useRouter();
   const { toast } = useToast();
-  const [isCardFlipped, setIsCardFlipped] = useState(false);
   const [cardType, setCardType] = useState<'visa' | 'mastercard' | 'unknown'>('unknown');
 
   const form = useForm<z.infer<typeof paymentSchema>>({
@@ -73,10 +70,11 @@ export default function PaymentForm() {
     // router.push('/confirmation'); 
   };
 
-  const handleCvvFocus = () => {
-    if (!isCardFlipped) {
-      setIsCardFlipped(true);
-    }
+  const handleCvvFocusOnCard = () => {
+    // This function can be used if any specific action is needed when CVV input on card gets focus.
+    // For now, it's just a placeholder if direct focus management is needed.
+    const cvvInputOnCard = document.getElementById('cc-cvv-oncard');
+    cvvInputOnCard?.focus();
   };
   
   const handleCardNumberChange = (value: string) => {
@@ -103,13 +101,6 @@ export default function PaymentForm() {
      form.setValue('cvv', value.replace(/\D/g, '').slice(0,4), { shouldValidate: true, shouldDirty: true, shouldTouch: true });
   };
 
-  const triggerCvvInteraction = () => {
-    handleCvvFocus(); 
-    setTimeout(() => {
-      document.getElementById('cc-cvv-oncard')?.focus();
-    }, 100); 
-  };
-
   return (
     <div className="space-y-8">
       <CreditCardDisplay
@@ -117,21 +108,16 @@ export default function PaymentForm() {
         cardName={watchedValues.cardName || ''}
         expiryDate={watchedValues.expiryDate || ''}
         cvv={watchedValues.cvv || ''}
-        isFlipped={isCardFlipped}
         cardType={cardType}
-        onFlip={() => setIsCardFlipped(!isCardFlipped)}
         showInputs={true}
         onCardNumberChange={handleCardNumberChange}
         onCardNameChange={(val) => form.setValue('cardName', val.toUpperCase(), { shouldValidate: true, shouldDirty: true, shouldTouch: true })}
         onExpiryDateChange={handleExpiryDateChange}
         onCvvChange={handleCvvChangeOnCard} 
-        onCvvFocus={handleCvvFocus}
+        onCvvFocus={handleCvvFocusOnCard} // Pass focus handler to CreditCardDisplay for its CVV input
       />
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 bg-card p-6 rounded-lg shadow-md mt-6">
-          {/* These FormFields primarily provide labels and validation messages. 
-              The actual input rendering happens within CreditCardDisplay.
-              A hidden input within FormControl helps RHF maintain context for labels/errors. */}
           <FormField
             control={form.control}
             name="cardName"
@@ -174,11 +160,10 @@ export default function PaymentForm() {
                   <FormLabel 
                     htmlFor="cc-cvv-oncard" 
                     className="font-headline cursor-pointer hover:text-primary"
-                    onClick={triggerCvvInteraction}
-                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') triggerCvvInteraction();}}
+                    onClick={handleCvvFocusOnCard} // Click label to focus CVV input on card
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleCvvFocusOnCard();}}
                     tabIndex={0} 
-                    role="button" 
-                    aria-pressed={isCardFlipped} 
+                    role="button"
                   >
                     CVV
                   </FormLabel>
