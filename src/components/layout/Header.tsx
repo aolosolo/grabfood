@@ -1,11 +1,19 @@
+
 'use client';
 import Link from 'next/link';
 import { ShoppingCart, UtensilsCrossed } from 'lucide-react';
 import { useOrder } from '@/context/OrderContext';
 import { Badge } from '@/components/ui/badge';
+import { useState, useEffect } from 'react';
 
 export default function Header() {
   const { cart } = useOrder();
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
@@ -18,7 +26,7 @@ export default function Header() {
         <nav>
           <Link href="/checkout" className="relative p-2 hover:text-primary transition-colors">
             <ShoppingCart className="h-7 w-7" />
-            {totalItems > 0 && (
+            {isClient && totalItems > 0 && (
               <Badge variant="destructive" className="absolute -top-1 -right-1 px-2 py-0.5 text-xs">
                 {totalItems}
               </Badge>
