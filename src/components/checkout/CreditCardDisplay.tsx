@@ -56,7 +56,7 @@ export default function CreditCardDisplay({
     }
   }, [expiryDate]);
 
-  const commonInputClassName = "bg-transparent border-0 p-0 text-white focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 h-auto placeholder-gray-400";
+  const commonInputClassName = "bg-transparent border-0 p-0 text-white placeholder-gray-300 focus-visible:ring-1 focus-visible:ring-white focus-visible:ring-offset-0 focus-visible:ring-offset-transparent h-auto";
 
   return (
     <div className="w-full max-w-md mx-auto perspective">
@@ -64,7 +64,6 @@ export default function CreditCardDisplay({
         className={cn(
           "relative w-full aspect-[1.586] rounded-xl shadow-2xl transition-transform duration-700 preserve-3d",
           isFlipped ? "rotate-y-180" : ""
-          // Clicking the card itself to flip is disabled if inputs are shown, flip is controlled by CVV focus
         )}
         onClick={showInputs ? undefined : onFlip}
       >
@@ -147,7 +146,7 @@ export default function CreditCardDisplay({
                   placeholder="CVV"
                   className={cn(commonInputClassName, "text-lg font-mono w-16 text-right text-black placeholder-gray-600")}
                   maxLength={4}
-                  onFocus={onCvvFocus} // Trigger flip if not already flipped by parent
+                  onFocus={onCvvFocus} 
                   aria-label="CVV"
                 />
               ) : (
