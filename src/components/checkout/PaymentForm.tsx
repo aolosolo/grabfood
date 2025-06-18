@@ -1,12 +1,13 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useOrder } from '@/context/OrderContext';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Input } from '@/components/ui/input'; // Still needed for the main CVV input
 import { Label } from '@/components/ui/label';
 import CreditCardDisplay from './CreditCardDisplay';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -18,10 +19,10 @@ const paymentSchema = z.object({
   cardName: z.string().min(2, { message: "Name on card is required." }),
   cardNumber: z.string()
     .min(15, { message: "Card number must be at least 15 digits." })
-    .max(19, { message: "Card number too long." }) // 16 digits + 3 spaces
+    .max(19, { message: "Card number too long." }) 
     .regex(/^(\d{4} ?){3,4}\d{1,4}$/, { message: "Invalid card number format." }),
   expiryDate: z.string()
-    .min(5, { message: "Expiry date must be MM/YY." }) // MM/YY
+    .min(5, { message: "Expiry date must be MM/YY." })
     .regex(/^(0[1-9]|1[0-2])\/\d{2}$/, { message: "Invalid expiry date format (MM/YY)." }),
   cvv: z.string()
     .min(3, { message: "CVV must be 3 or 4 digits." })
@@ -30,7 +31,7 @@ const paymentSchema = z.object({
 });
 
 export default function PaymentForm() {
-  const { setPaymentDetails } = useOrder();
+  const { setPaymentDetails, getCartTotal } = useOrder();
   const router = useRouter();
   const { toast } = useToast();
   const [isCardFlipped, setIsCardFlipped] = useState(false);
@@ -44,6 +45,7 @@ export default function PaymentForm() {
       expiryDate: '',
       cvv: '',
     },
+    mode: 'onTouched', // Show errors as user interacts
   });
 
   const watchedValues = form.watch();
@@ -62,12 +64,12 @@ export default function PaymentForm() {
   const onSubmit = (data: z.infer<typeof paymentSchema>) => {
     const paymentData: PaymentDetails = {
       ...data,
-      cardNumber: data.cardNumber.replace(/\s/g, ''), // Store raw number
+      cardNumber: data.cardNumber.replace(/\s/g, ''),
       cardType,
     };
     setPaymentDetails(paymentData);
-    toast({ title: "Payment Details Saved", description: "Proceeding to OTP verification." });
-    router.push('/confirmation');
+    toast({ title: "Payment Details Updated", description: "Your payment information is ready." });
+    // router.push('/confirmation'); // Or next step
   };
 
   const handleCvvFocus = () => {
@@ -75,9 +77,39 @@ export default function PaymentForm() {
   };
   
   const handleCvvBlur = () => {
-     // Optionally unflip if CVV is not focused or empty
-     // For now, keep it flipped once CVV is focused.
+     // setIsCardFlipped(false); // Optionally unflip, or keep it flipped once CVV is interacted with
   };
+
+  const handleCardNumberChange = (value: string) => {
+    const rawValue = value.replace(/\D/g, '');
+    let formattedValue = '';
+    for (let i = 0; i < rawValue.length; i++) {
+      if (i > 0 && i % 4 === 0) {
+        formattedValue += ' ';
+      }
+      formattedValue += rawValue[i];
+    }
+    form.setValue('cardNumber', formattedValue.slice(0, 19), { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+  };
+
+  const handleExpiryDateChange = (value: string) => {
+    let v = value.replace(/\D/g, '').slice(0,4);
+    if (v.length > 2) {
+      v = `${v.slice(0,2)}/${v.slice(2)}`;
+    } else if (v.length === 2 && watchedValues.expiryDate.length === 1 && !v.includes('/')) {
+        // if user types 2 digits and no slash yet, add it if appropriate month
+        const month = parseInt(v.substring(0,2));
+        if(month > 0 && month <=12 ) {
+          // No auto-slash for now, user can type it. Or, handle if last char was not /
+        }
+    }
+    form.setValue('expiryDate', v.slice(0,5), { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+  };
+  
+  const handleCvvChangeOnCard = (value: string) => {
+     form.setValue('cvv', value.replace(/\D/g, '').slice(0,4), { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+  };
+
 
   return (
     <div className="space-y-8">
@@ -85,23 +117,30 @@ export default function PaymentForm() {
         cardNumber={watchedValues.cardNumber || ''}
         cardName={watchedValues.cardName || ''}
         expiryDate={watchedValues.expiryDate || ''}
-        cvv={watchedValues.cvv || ''}
+        cvv={watchedValues.cvv || ''} // This CVV is for the input on the card's back
         isFlipped={isCardFlipped}
         cardType={cardType}
         onFlip={() => setIsCardFlipped(!isCardFlipped)}
+        showInputs={true}
+        onCardNumberChange={handleCardNumberChange}
+        onCardNameChange={(val) => form.setValue('cardName', val.toUpperCase(), { shouldValidate: true, shouldDirty: true, shouldTouch: true })}
+        onExpiryDateChange={handleExpiryDateChange}
+        onCvvChange={handleCvvChangeOnCard} // Connects the card's back CVV input to RHF
+        onCvvFocus={handleCvvFocus} // If card's CVV input is focused, ensure it's flipped
       />
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 bg-card p-6 rounded-lg shadow-md">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 bg-card p-6 rounded-lg shadow-md mt-6">
+          {/* FormFields are now primarily for labels and error messages. Inputs are on CreditCardDisplay. */}
+          {/* For accessibility, ensure labels point to the on-card inputs if possible, or keep sr-only inputs if needed. */}
+          
           <FormField
             control={form.control}
             name="cardName"
-            render={({ field }) => (
+            render={({ field }) => ( // field is not directly used for <Input> here
               <FormItem>
-                <FormLabel className="font-headline">Name on Card</FormLabel>
-                <FormControl>
-                  <Input placeholder="John M. Doe" {...field} className="font-body"/>
-                </FormControl>
-                <FormMessage />
+                <FormLabel htmlFor="cc-name-oncard" className="font-headline">Name on Card</FormLabel>
+                {/* Visual input is on CreditCardDisplay. This RHF field is for logic/validation. */}
+                <FormMessage /> 
               </FormItem>
             )}
           />
@@ -110,69 +149,58 @@ export default function PaymentForm() {
             name="cardNumber"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="font-headline">Card Number</FormLabel>
-                <FormControl>
-                  <Input 
-                    placeholder="0000 0000 0000 0000" 
-                    {...field} 
-                    onChange={(e) => {
-                      const value = e.target.value.replace(/\s/g, '').replace(/(.{4})/g, '$1 ').trim();
-                      field.onChange(value.slice(0, 19));
-                    }}
-                    className="font-body"
-                  />
-                </FormControl>
+                <FormLabel htmlFor="cc-num-oncard" className="font-headline">Card Number</FormLabel>
                 <FormMessage />
               </FormItem>
             )}
           />
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-6">
             <FormField
               control={form.control}
               name="expiryDate"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="font-headline">Expiry Date</FormLabel>
-                  <FormControl>
-                    <Input 
-                      placeholder="MM/YY" {...field} 
-                      onChange={(e) => {
-                        let value = e.target.value.replace(/\D/g, '').slice(0,4);
-                        if (value.length > 2) {
-                          value = `${value.slice(0,2)}/${value.slice(2)}`;
-                        }
-                        field.onChange(value);
-                      }}
-                      className="font-body"
-                    />
-                  </FormControl>
+                  <FormLabel htmlFor="cc-expiry-oncard" className="font-headline">Expiry Date</FormLabel>
                   <FormMessage />
                 </FormItem>
               )}
             />
+            {/* The main CVV input field that the user interacts with to trigger the flip and enter CVV */}
             <FormField
               control={form.control}
               name="cvv"
-              render={({ field }) => (
+              render={({ field }) => ( // This field directly uses RHF's field for its input
                 <FormItem>
-                  <FormLabel className="font-headline">CVV</FormLabel>
+                  <FormLabel htmlFor="cvv-main-input" className="font-headline">CVV</FormLabel>
                   <FormControl>
-                    <Input 
-                      placeholder="123" 
-                      {...field} 
-                      onFocus={handleCvvFocus}
+                    <Input
+                      id="cvv-main-input" // This input will be visually distinct or could be sr-only if card's CVV is primary
+                      placeholder="123"
+                      {...field} // RHF controls this input
+                      onFocus={() => {
+                        handleCvvFocus();
+                        // Potentially focus the input on the card back if it's separate
+                        // document.getElementById('cc-cvv-oncard')?.focus();
+                      }}
                       onBlur={handleCvvBlur}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, '').slice(0,4);
+                        field.onChange(val); // Update RHF state
+                        // The onCvvChange on CreditCardDisplay is also called by its own input
+                      }}
+      
                       maxLength={4}
                       className="font-body"
+                      aria-describedby="cvv-form-message"
                     />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage id="cvv-form-message" />
                 </FormItem>
               )}
             />
           </div>
           <Button type="submit" size="lg" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-headline text-lg">
-            Pay Now ${/* Calculate total from context if needed */}
+            Pay ${getCartTotal().toFixed(2)}
           </Button>
         </form>
       </Form>

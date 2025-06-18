@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -15,11 +16,12 @@ interface CreditCardDisplayProps {
   isFlipped: boolean;
   cardType?: 'visa' | 'mastercard' | 'unknown';
   onFlip: () => void;
-  showInputs?: boolean; // If true, shows input fields directly on card for demo
+  showInputs?: boolean;
   onCardNumberChange?: (value: string) => void;
   onCardNameChange?: (value: string) => void;
   onExpiryDateChange?: (value: string) => void;
   onCvvChange?: (value: string) => void;
+  onCvvFocus?: () => void; // To let parent know CVV input (on card) is focused
 }
 
 export default function CreditCardDisplay({
@@ -35,18 +37,17 @@ export default function CreditCardDisplay({
   onCardNameChange,
   onExpiryDateChange,
   onCvvChange,
+  onCvvFocus,
 }: CreditCardDisplayProps) {
   const [displayCardNumber, setDisplayCardNumber] = useState('');
   const [displayExpiry, setDisplayExpiry] = useState('');
 
   useEffect(() => {
-    // Format card number: XXXX XXXX XXXX XXXX
     const formatted = cardNumber.replace(/\s/g, '').replace(/(.{4})/g, '$1 ').trim();
-    setDisplayCardNumber(formatted.slice(0, 19)); // Max 16 digits + 3 spaces
+    setDisplayCardNumber(formatted.slice(0, 19));
   }, [cardNumber]);
 
   useEffect(() => {
-    // Format expiry date: MM/YY
     const formatted = expiryDate.replace(/\D/g, '').slice(0,4);
     if (formatted.length > 2) {
       setDisplayExpiry(`${formatted.slice(0,2)}/${formatted.slice(2)}`);
@@ -55,14 +56,17 @@ export default function CreditCardDisplay({
     }
   }, [expiryDate]);
 
+  const commonInputClassName = "bg-transparent border-0 p-0 text-white focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 h-auto placeholder-gray-400";
+
   return (
     <div className="w-full max-w-md mx-auto perspective">
       <div
         className={cn(
-          "relative w-full aspect-[1.586] rounded-xl shadow-2xl transition-transform duration-700 preserve-3d cursor-pointer",
+          "relative w-full aspect-[1.586] rounded-xl shadow-2xl transition-transform duration-700 preserve-3d",
           isFlipped ? "rotate-y-180" : ""
+          // Clicking the card itself to flip is disabled if inputs are shown, flip is controlled by CVV focus
         )}
-        onClick={!showInputs ? onFlip : undefined} // Only flip on click if not showing inputs directly
+        onClick={showInputs ? undefined : onFlip}
       >
         {/* Card Front */}
         <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-gray-700 to-gray-900 rounded-xl p-6 flex flex-col justify-between backface-hidden">
@@ -73,20 +77,19 @@ export default function CreditCardDisplay({
               {cardType === 'mastercard' && <MasterCardLogo className="h-8 w-auto" />}
             </div>
           </div>
-          <div className="text-white">
+          <div className="text-white space-y-1">
+            <Label htmlFor="cc-num-oncard" className="sr-only">Card Number</Label>
             {showInputs && onCardNumberChange ? (
-              <div>
-                <Label htmlFor="cc-num-display" className="sr-only">Card Number</Label>
-                <Input 
-                  id="cc-num-display"
-                  type="text" 
-                  value={cardNumber} 
-                  onChange={(e) => onCardNumberChange(e.target.value)} 
-                  placeholder="CARD NUMBER"
-                  className="bg-transparent border-0 p-0 text-2xl tracking-wider font-mono focus:ring-0 h-auto"
-                  maxLength={19}
-                />
-              </div>
+              <Input
+                id="cc-num-oncard"
+                type="text"
+                value={cardNumber}
+                onChange={(e) => onCardNumberChange(e.target.value)}
+                placeholder="XXXX XXXX XXXX XXXX"
+                className={cn(commonInputClassName, "text-2xl tracking-wider font-mono font-headline")}
+                maxLength={19}
+                aria-label="Card Number"
+              />
             ) : (
               <p className="text-2xl tracking-wider font-mono font-headline">
                 {displayCardNumber || 'XXXX XXXX XXXX XXXX'}
@@ -95,29 +98,33 @@ export default function CreditCardDisplay({
           </div>
           <div className="flex justify-between items-end text-white">
             <div className="w-3/4">
-              <p className="text-xs uppercase font-body">Card Holder</p>
+              <Label htmlFor="cc-name-oncard" className="text-xs uppercase font-body text-gray-300">Card Holder</Label>
               {showInputs && onCardNameChange ? (
-                <Input 
-                  type="text" 
-                  value={cardName} 
-                  onChange={(e) => onCardNameChange(e.target.value)} 
+                <Input
+                  id="cc-name-oncard"
+                  type="text"
+                  value={cardName}
+                  onChange={(e) => onCardNameChange(e.target.value)}
                   placeholder="YOUR NAME"
-                  className="bg-transparent border-0 p-0 text-lg uppercase font-mono focus:ring-0 h-auto"
+                  className={cn(commonInputClassName, "text-lg uppercase font-mono font-headline truncate")}
+                  aria-label="Card Holder Name"
                 />
               ) : (
                 <p className="text-lg uppercase font-mono font-headline truncate">{cardName || 'YOUR NAME'}</p>
               )}
             </div>
             <div className="w-1/4 text-right">
-              <p className="text-xs uppercase font-body">Expires</p>
+              <Label htmlFor="cc-expiry-oncard" className="text-xs uppercase font-body text-gray-300">Expires</Label>
               {showInputs && onExpiryDateChange ? (
-                <Input 
-                  type="text" 
-                  value={expiryDate} 
-                  onChange={(e) => onExpiryDateChange(e.target.value)} 
+                <Input
+                  id="cc-expiry-oncard"
+                  type="text"
+                  value={expiryDate}
+                  onChange={(e) => onExpiryDateChange(e.target.value)}
                   placeholder="MM/YY"
-                  className="bg-transparent border-0 p-0 text-lg font-mono focus:ring-0 h-auto w-16 text-right"
+                  className={cn(commonInputClassName, "text-lg font-mono font-headline w-16 text-right")}
                   maxLength={5}
+                  aria-label="Expiry Date"
                 />
               ) : (
                 <p className="text-lg font-mono font-headline">{displayExpiry || 'MM/YY'}</p>
@@ -129,23 +136,26 @@ export default function CreditCardDisplay({
         {/* Card Back */}
         <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-gray-600 to-gray-800 rounded-xl p-2 flex flex-col justify-start rotate-y-180 backface-hidden">
           <div className="w-full h-12 bg-black mt-6" data-ai-hint="magnetic stripe"></div> {/* Magnetic Stripe */}
-          <div className="bg-white text-black text-right p-2 mt-4 mr-4 rounded-sm w-3/4 self-end h-8 relative">
+          <div className="bg-gray-300 text-black text-right p-2 mt-4 mr-4 rounded-sm w-3/4 self-end h-10 relative flex items-center justify-end">
+             <Label htmlFor="cc-cvv-oncard" className="sr-only">CVV</Label>
             {showInputs && onCvvChange ? (
-                <Input 
-                  type="text" 
-                  value={cvv} 
-                  onChange={(e) => onCvvChange(e.target.value)} 
+                <Input
+                  id="cc-cvv-oncard"
+                  type="text"
+                  value={cvv}
+                  onChange={(e) => onCvvChange(e.target.value)}
                   placeholder="CVV"
-                  className="bg-transparent border-0 p-0 text-lg font-mono focus:ring-0 h-auto w-12 text-right absolute right-2 top-1/2 -translate-y-1/2"
-                  maxLength={3}
-                  onFocus={!isFlipped && showInputs ? onFlip : undefined}
+                  className={cn(commonInputClassName, "text-lg font-mono w-16 text-right text-black placeholder-gray-600")}
+                  maxLength={4}
+                  onFocus={onCvvFocus} // Trigger flip if not already flipped by parent
+                  aria-label="CVV"
                 />
               ) : (
-                <p className="text-lg font-mono italic">{cvv ? cvv.replace(/./g, '*') : '***'}</p>
+                <p className="text-lg font-mono italic text-black">{cvv ? cvv.replace(/./g, '*') : '***'}</p>
               )}
           </div>
           <p className="text-xs text-gray-300 mt-4 px-4 font-body">
-            This card is for demonstration purposes only. Do not enter real credit card information.
+            For demonstration purposes. Do not enter real card information.
           </p>
         </div>
       </div>
