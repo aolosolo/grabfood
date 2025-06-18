@@ -79,3 +79,18 @@
     @apply font-headline;
   }
 }
+
+@layer utilities {
+  .perspective {
+    perspective: 1000px;
+  }
+  .preserve-3d {
+    transform-style: preserve-3d;
+  }
+  /* Tailwind CSS includes rotate-y-180, so we don't need to redefine it unless it's used differently */
+  /* If 'rotate-y-180' is a custom class name in your HTML not matching Tailwind's utility, you might need: */
+  /* .rotate-y-180 { transform: rotateY(180deg); } */
+  .backface-hidden {
+    backface-visibility: hidden;
+  }
+}
