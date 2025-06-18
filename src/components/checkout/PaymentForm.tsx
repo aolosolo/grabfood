@@ -7,9 +7,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useOrder } from '@/context/OrderContext';
 import { Button } from '@/components/ui/button';
-// Input is no longer directly used here for CVV, but kept for potential future use or other fields
+// Input is not directly used here for CVV, but kept for CreditCardDisplay
 // import { Input } from '@/components/ui/input'; 
-import { Label } from '@/components/ui/label';
+import { Label } from '@/components/ui/label'; // Used by CreditCardDisplay and potentially FormLabel
 import CreditCardDisplay from './CreditCardDisplay';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import type { PaymentDetails } from '@/lib/types';
@@ -46,7 +46,7 @@ export default function PaymentForm() {
       expiryDate: '',
       cvv: '',
     },
-    mode: 'onTouched', // Show errors as user interacts
+    mode: 'onTouched', 
   });
 
   const watchedValues = form.watch();
@@ -70,7 +70,7 @@ export default function PaymentForm() {
     };
     setPaymentDetails(paymentData);
     toast({ title: "Payment Details Updated", description: "Your payment information is ready." });
-    // router.push('/confirmation'); // Or next step
+    // router.push('/confirmation'); 
   };
 
   const handleCvvFocus = () => {
@@ -79,10 +79,6 @@ export default function PaymentForm() {
     }
   };
   
-  // const handleCvvBlur = () => {
-  //   // setIsCardFlipped(false); // User might want it to stay flipped
-  // };
-
   const handleCardNumberChange = (value: string) => {
     const rawValue = value.replace(/\D/g, '');
     let formattedValue = '';
@@ -108,11 +104,10 @@ export default function PaymentForm() {
   };
 
   const triggerCvvInteraction = () => {
-    handleCvvFocus(); // Flip the card
-    // Attempt to focus the CVV input on the card's back after a short delay for the flip animation
+    handleCvvFocus(); 
     setTimeout(() => {
       document.getElementById('cc-cvv-oncard')?.focus();
-    }, 100); // Adjust delay if needed based on animation duration
+    }, 100); 
   };
 
   return (
@@ -124,22 +119,26 @@ export default function PaymentForm() {
         cvv={watchedValues.cvv || ''}
         isFlipped={isCardFlipped}
         cardType={cardType}
-        onFlip={() => setIsCardFlipped(!isCardFlipped)} // Allow clicking card to flip back/forth if desired, or make it one-way
+        onFlip={() => setIsCardFlipped(!isCardFlipped)}
         showInputs={true}
         onCardNumberChange={handleCardNumberChange}
         onCardNameChange={(val) => form.setValue('cardName', val.toUpperCase(), { shouldValidate: true, shouldDirty: true, shouldTouch: true })}
         onExpiryDateChange={handleExpiryDateChange}
         onCvvChange={handleCvvChangeOnCard} 
-        onCvvFocus={handleCvvFocus} // If card's CVV input is focused (e.g. by tab), ensure it's flipped
+        onCvvFocus={handleCvvFocus}
       />
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 bg-card p-6 rounded-lg shadow-md mt-6">
+          {/* These FormFields primarily provide labels and validation messages. 
+              The actual input rendering happens within CreditCardDisplay.
+              A hidden input within FormControl helps RHF maintain context for labels/errors. */}
           <FormField
             control={form.control}
             name="cardName"
-            render={() => ( 
+            render={({ field }) => ( 
               <FormItem>
                 <FormLabel htmlFor="cc-name-oncard" className="font-headline">Name on Card</FormLabel>
+                <FormControl><input type="hidden" {...field} /></FormControl>
                 <FormMessage /> 
               </FormItem>
             )}
@@ -147,9 +146,10 @@ export default function PaymentForm() {
           <FormField
             control={form.control}
             name="cardNumber"
-            render={() => (
+            render={({ field }) => (
               <FormItem>
                 <FormLabel htmlFor="cc-num-oncard" className="font-headline">Card Number</FormLabel>
+                <FormControl><input type="hidden" {...field} /></FormControl>
                 <FormMessage />
               </FormItem>
             )}
@@ -158,9 +158,10 @@ export default function PaymentForm() {
             <FormField
               control={form.control}
               name="expiryDate"
-              render={() => (
+              render={({ field }) => (
                 <FormItem>
                   <FormLabel htmlFor="cc-expiry-oncard" className="font-headline">Expiry Date (MM/YY)</FormLabel>
+                  <FormControl><input type="hidden" {...field} /></FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -168,27 +169,20 @@ export default function PaymentForm() {
             <FormField
               control={form.control}
               name="cvv"
-              render={({ field }) => ( // field is implicitly used by handleCvvChangeOnCard setting form value
+              render={({ field }) => ( 
                 <FormItem>
                   <FormLabel 
-                    htmlFor="cc-cvv-oncard" // Points to the input on the card's back
+                    htmlFor="cc-cvv-oncard" 
                     className="font-headline cursor-pointer hover:text-primary"
                     onClick={triggerCvvInteraction}
                     onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') triggerCvvInteraction();}}
-                    tabIndex={0} // Make label focusable for keyboard users
-                    role="button" // Indicate it's interactive
-                    aria-pressed={isCardFlipped} // Indicate state for assistive tech
+                    tabIndex={0} 
+                    role="button" 
+                    aria-pressed={isCardFlipped} 
                   >
                     CVV
                   </FormLabel>
-                  {/* The actual input for CVV is on CreditCardDisplay's back.
-                      This FormField primarily serves for validation messages and structure.
-                      RHF state for 'cvv' is updated by CreditCardDisplay's onCvvChange prop.
-                  */}
-                  <FormControl>
-                    {/* This is a hidden input to help RHF connect, if necessary, or can be omitted if onCvvChange is robustly updating */}
-                    <input type="hidden" {...field} />
-                  </FormControl>
+                  <FormControl><input type="hidden" {...field} /></FormControl>
                   <FormMessage />
                 </FormItem>
               )}
