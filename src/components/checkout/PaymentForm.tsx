@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -7,12 +6,15 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useOrder } from '@/context/OrderContext';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label'; // Used by CreditCardDisplay and potentially FormLabel
+import { Input } from '@/components/ui/input'; // For hidden inputs if needed
+import { Label } from '@/components/ui/label';
 import CreditCardDisplay from './CreditCardDisplay';
+import OtpDialog from './OtpDialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import type { PaymentDetails } from '@/lib/types';
+import type { PaymentDetails, OrderDetailsForEmail } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
+import { generateOtpAction, sendOrderEmailAction } from '@/app/actions';
 
 const paymentSchema = z.object({
   cardName: z.string().min(2, { message: "Name on card is required." }),
@@ -30,10 +32,14 @@ const paymentSchema = z.object({
 });
 
 export default function PaymentForm() {
-  const { setPaymentDetails, getCartTotal } = useOrder();
+  const { userDetails, cart, setPaymentDetails, getCartTotal, resetOrder } = useOrder();
   const router = useRouter();
   const { toast } = useToast();
   const [cardType, setCardType] = useState<'visa' | 'mastercard' | 'unknown'>('unknown');
+  
+  const [isOtpDialogOpen, setIsOtpDialogOpen] = useState(false);
+  const [generatedOtp, setGeneratedOtp] = useState<string | null>(null);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   const form = useForm<z.infer<typeof paymentSchema>>({
     resolver: zodResolver(paymentSchema),
@@ -59,22 +65,83 @@ export default function PaymentForm() {
     }
   }, [watchedValues.cardNumber]);
   
-  const onSubmit = (data: z.infer<typeof paymentSchema>) => {
+  const onSubmitPaymentDetails = async (data: z.infer<typeof paymentSchema>) => {
+    setIsProcessingPayment(true);
     const paymentData: PaymentDetails = {
       ...data,
-      cardNumber: data.cardNumber.replace(/\s/g, ''),
+      cardNumber: data.cardNumber.replace(/\s/g, ''), // Store raw card number
       cardType,
     };
     setPaymentDetails(paymentData);
-    toast({ title: "Payment Details Updated", description: "Your payment information is ready." });
-    // router.push('/confirmation'); 
+    toast({ title: "Payment Details Confirmed", description: "Proceeding to OTP verification." });
+
+    if (!userDetails?.phone) {
+      toast({ variant: "destructive", title: "Error", description: "User phone number is missing for OTP." });
+      setIsProcessingPayment(false);
+      return;
+    }
+
+    try {
+      const otpResult = await generateOtpAction({ phoneNumber: userDetails.phone });
+      setGeneratedOtp(otpResult.otp);
+      setIsOtpDialogOpen(true);
+      // For simulation, show OTP in a toast
+      toast({
+        title: "OTP Generated (Simulation)",
+        description: `Your OTP is: ${otpResult.otp}. Enter this in the dialog. (Normally sent via SMS)`,
+        duration: 10000, // Keep it visible longer
+      });
+    } catch (error) {
+      toast({ variant: "destructive", title: "OTP Error", description: "Could not generate OTP. Please try again." });
+      console.error("OTP generation error:", error);
+    } finally {
+      setIsProcessingPayment(false);
+    }
   };
 
-  const handleCvvFocusOnCard = () => {
-    // This function can be used if any specific action is needed when CVV input on card gets focus.
-    // For now, it's just a placeholder if direct focus management is needed.
-    const cvvInputOnCard = document.getElementById('cc-cvv-oncard');
-    cvvInputOnCard?.focus();
+  const handleOtpSubmit = async (enteredOtp: string) => {
+    setIsOtpDialogOpen(false);
+    setIsProcessingPayment(true);
+
+    if (enteredOtp === generatedOtp) {
+      toast({ title: "OTP Verified!", description: "Processing your order..." });
+      
+      if (!userDetails || cart.length === 0) {
+        toast({ variant: "destructive", title: "Order Error", description: "Missing user details or empty cart."});
+        setIsProcessingPayment(false);
+        return;
+      }
+
+      const orderId = `FG-${Date.now()}`; 
+      const orderDetailsForEmail: OrderDetailsForEmail = {
+        orderId,
+        items: cart.map(item => ({ name: item.name, quantity: item.quantity, price: item.price, subtotal: item.price * item.quantity })),
+        customerName: userDetails.name,
+        customerEmail: userDetails.email,
+        customerAddress: userDetails.address,
+        customerPhone: userDetails.phone,
+        totalAmount: getCartTotal(),
+      };
+
+      try {
+        const emailResult = await sendOrderEmailAction(orderDetailsForEmail);
+        if (emailResult.success) {
+          toast({ title: "Order Placed!", description: "Admin has been notified (simulated)." });
+        } else {
+           toast({ title: "Order Placed", description: "Failed to notify admin (simulated), but order is processed." });
+        }
+        resetOrder();
+        router.push('/order-confirmation');
+
+      } catch (error) {
+        toast({ variant: "destructive", title: "Order Processing Error", description: "Could not finalize order." });
+      }
+
+    } else {
+      toast({ variant: "destructive", title: "OTP Incorrect", description: "Please try again." });
+    }
+    setGeneratedOtp(null); // Clear OTP after attempt
+    setIsProcessingPayment(false);
   };
   
   const handleCardNumberChange = (value: string) => {
@@ -101,8 +168,9 @@ export default function PaymentForm() {
      form.setValue('cvv', value.replace(/\D/g, '').slice(0,4), { shouldValidate: true, shouldDirty: true, shouldTouch: true });
   };
 
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-4">
       <CreditCardDisplay
         cardNumber={watchedValues.cardNumber || ''}
         cardName={watchedValues.cardName || ''}
@@ -113,18 +181,18 @@ export default function PaymentForm() {
         onCardNumberChange={handleCardNumberChange}
         onCardNameChange={(val) => form.setValue('cardName', val.toUpperCase(), { shouldValidate: true, shouldDirty: true, shouldTouch: true })}
         onExpiryDateChange={handleExpiryDateChange}
-        onCvvChange={handleCvvChangeOnCard} 
-        onCvvFocus={handleCvvFocusOnCard} // Pass focus handler to CreditCardDisplay for its CVV input
+        onCvvChange={handleCvvChangeOnCard}
       />
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 bg-card p-6 rounded-lg shadow-md mt-6">
+        <form onSubmit={form.handleSubmit(onSubmitPaymentDetails)} className="space-y-6 bg-card p-6 rounded-lg shadow-md mt-6">
+           {/* Hidden inputs linked to react-hook-form fields, labels provide accessibility and error messages */}
           <FormField
             control={form.control}
             name="cardName"
             render={({ field }) => ( 
-              <FormItem>
-                <FormLabel htmlFor="cc-name-oncard" className="font-headline">Name on Card</FormLabel>
-                <FormControl><input type="hidden" {...field} /></FormControl>
+              <FormItem className="sr-only">
+                <FormLabel htmlFor="cc-name-oncard-form" className="font-headline">Name on Card</FormLabel>
+                <FormControl><Input type="hidden" {...field} id="cc-name-oncard-form" /></FormControl>
                 <FormMessage /> 
               </FormItem>
             )}
@@ -133,21 +201,21 @@ export default function PaymentForm() {
             control={form.control}
             name="cardNumber"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel htmlFor="cc-num-oncard" className="font-headline">Card Number</FormLabel>
-                <FormControl><input type="hidden" {...field} /></FormControl>
+              <FormItem className="sr-only">
+                <FormLabel htmlFor="cc-num-oncard-form" className="font-headline">Card Number</FormLabel>
+                <FormControl><Input type="hidden" {...field} id="cc-num-oncard-form" /></FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
-          <div className="grid grid-cols-2 gap-x-4 gap-y-6">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-6 sr-only">
             <FormField
               control={form.control}
               name="expiryDate"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel htmlFor="cc-expiry-oncard" className="font-headline">Expiry Date (MM/YY)</FormLabel>
-                  <FormControl><input type="hidden" {...field} /></FormControl>
+                  <FormLabel htmlFor="cc-expiry-oncard-form" className="font-headline">Expiry Date (MM/YY)</FormLabel>
+                  <FormControl><Input type="hidden" {...field} id="cc-expiry-oncard-form"/></FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -157,27 +225,27 @@ export default function PaymentForm() {
               name="cvv"
               render={({ field }) => ( 
                 <FormItem>
-                  <FormLabel 
-                    htmlFor="cc-cvv-oncard" 
-                    className="font-headline cursor-pointer hover:text-primary"
-                    onClick={handleCvvFocusOnCard} // Click label to focus CVV input on card
-                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleCvvFocusOnCard();}}
-                    tabIndex={0} 
-                    role="button"
-                  >
-                    CVV
-                  </FormLabel>
-                  <FormControl><input type="hidden" {...field} /></FormControl>
+                  <FormLabel htmlFor="cc-cvv-oncard-form" className="font-headline">CVV</FormLabel>
+                  <FormControl><Input type="hidden" {...field} id="cc-cvv-oncard-form" /></FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
           </div>
-          <Button type="submit" size="lg" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-headline text-lg">
-            Pay ${getCartTotal().toFixed(2)}
+          <Button type="submit" size="lg" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-headline text-lg" disabled={isProcessingPayment}>
+            {isProcessingPayment ? 'Processing...' : `Pay $${getCartTotal().toFixed(2)}`}
           </Button>
         </form>
       </Form>
+      <OtpDialog
+        isOpen={isOtpDialogOpen}
+        onClose={() => {
+            setIsOtpDialogOpen(false);
+            setGeneratedOtp(null); // Clear OTP if dialog is closed manually
+        }}
+        onSubmitOtp={handleOtpSubmit}
+        phoneNumber={userDetails?.phone}
+      />
     </div>
   );
 }

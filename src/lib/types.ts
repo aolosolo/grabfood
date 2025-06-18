@@ -53,3 +53,13 @@ export interface FoodCategory {
   name: string;
   icon?: LucideIcon;
 }
+
+export interface OrderDetailsForEmail {
+  items: Array<{ name: string; quantity: number; price: number; subtotal: number }>;
+  customerName: string;
+  customerEmail: string;
+  customerAddress: string;
+  customerPhone: string;
+  totalAmount: number;
+  orderId: string;
+}
