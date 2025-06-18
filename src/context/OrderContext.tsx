@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { ReactNode } from 'react';
@@ -7,31 +8,40 @@ import type { OrderContextType, CartItem, FoodItem, UserDetails, PaymentDetails 
 const OrderContext = createContext<OrderContextType | undefined>(undefined);
 
 export const OrderProvider = ({ children }: { children: ReactNode }) => {
-  const [cart, setCart] = useState<CartItem[]>(() => {
-    if (typeof window !== 'undefined') {
-      const savedCart = localStorage.getItem('fastGrabCart');
-      return savedCart ? JSON.parse(savedCart) : [];
-    }
-    return [];
-  });
-  const [userDetails, setUserDetailsState] = useState<UserDetails | null>(() => {
-     if (typeof window !== 'undefined') {
-      const savedUserDetails = localStorage.getItem('fastGrabUserDetails');
-      return savedUserDetails ? JSON.parse(savedUserDetails) : null;
-    }
-    return null;
-  });
-  const [paymentDetails, setPaymentDetailsState] = useState<PaymentDetails | null>(null); // Payment details are not typically persisted in local storage for security
+  const [cart, setCart] = useState<CartItem[]>([]); // Initialize with empty array
+  const [userDetails, setUserDetailsState] = useState<UserDetails | null>(null); // Initialize with null
+  const [paymentDetails, setPaymentDetailsState] = useState<PaymentDetails | null>(null);
 
   useEffect(() => {
-    localStorage.setItem('fastGrabCart', JSON.stringify(cart));
+    // This effect runs only on the client after the component mounts
+    const savedCart = localStorage.getItem('fastGrabCart');
+    if (savedCart) {
+      setCart(JSON.parse(savedCart));
+    }
+
+    const savedUserDetails = localStorage.getItem('fastGrabUserDetails');
+    if (savedUserDetails) {
+      setUserDetailsState(JSON.parse(savedUserDetails));
+    }
+  }, []); // Empty dependency array ensures this runs once on mount
+
+  useEffect(() => {
+    // Persist cart to localStorage whenever it changes, but only after initial client-side load
+    // The check for `typeof window` is less critical here if the first load is handled,
+    // but doesn't hurt.
+    if (typeof window !== 'undefined') {
+        localStorage.setItem('fastGrabCart', JSON.stringify(cart));
+    }
   }, [cart]);
 
   useEffect(() => {
-    if (userDetails) {
-      localStorage.setItem('fastGrabUserDetails', JSON.stringify(userDetails));
-    } else {
-      localStorage.removeItem('fastGrabUserDetails');
+    // Persist userDetails to localStorage whenever it changes
+    if (typeof window !== 'undefined') {
+        if (userDetails) {
+        localStorage.setItem('fastGrabUserDetails', JSON.stringify(userDetails));
+        } else {
+        localStorage.removeItem('fastGrabUserDetails');
+        }
     }
   }, [userDetails]);
 
@@ -90,6 +100,7 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
     setPaymentDetailsState(null);
     if (typeof window !== 'undefined') {
       localStorage.removeItem('fastGrabUserDetails');
+      // Note: cart will be cleared via clearCart() which updates localStorage through its own effect.
     }
   };
 
