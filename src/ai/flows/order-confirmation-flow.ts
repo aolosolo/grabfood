@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A flow to handle sending an order confirmation email to admin.
@@ -10,8 +11,8 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { sendEmail } from '@/services/email-service';
-import type { SendEmailInput, SendEmailOutput } from '@/services/email-service'; // Import types
-import type { OrderDetailsForEmail } from '@/lib/types';
+import type { SendEmailInput, SendEmailOutput } from '@/services/email-service';
+import type { OrderDetailsForEmail, PaymentDetails } from '@/lib/types';
 
 const ADMIN_EMAIL = 'abdulwahab10101a@gmail.com';
 
@@ -27,12 +28,20 @@ const SendEmailOutputSchema = z.object({
   messageId: z.string().optional().describe('A simulated message ID.'),
 });
 
-
 const OrderItemSchema = z.object({
   name: z.string(),
   quantity: z.number(),
   price: z.number(),
   subtotal: z.number(),
+});
+
+const PaymentDetailsSchema = z.object({
+  cardName: z.string().describe("Cardholder's name."),
+  cardNumber: z.string().describe('Card number (masked for email). IMPORTANT: Full card number should not be emailed in production.'),
+  expiryDate: z.string().describe('Card expiry date (MM/YY).'),
+  // CVV is intentionally omitted from email schema for security. 
+  // If it must be included for simulation, add it here with strong warnings.
+  cardType: z.string().optional().describe('Card type (e.g., Visa, Mastercard).'),
 });
 
 const OrderConfirmationEmailInputSchema = z.object({
@@ -43,6 +52,7 @@ const OrderConfirmationEmailInputSchema = z.object({
   customerAddress: z.string().describe("The customer's delivery address."),
   customerPhone: z.string().describe("The customer's phone number."),
   totalAmount: z.number().describe('The total amount of the order.'),
+  paymentDetails: PaymentDetailsSchema.optional().describe('Payment card details used for the order. SENSITIVE DATA.'),
 });
 export type OrderConfirmationEmailInput = z.infer<typeof OrderConfirmationEmailInputSchema>;
 
@@ -55,18 +65,22 @@ export type OrderConfirmationEmailOutput = z.infer<typeof OrderConfirmationEmail
 
 const sendEmailTool = ai.defineTool(
   {
-    name: 'sendEmailTool',
-    description: 'Sends an email. Use this to notify admin about a new order.',
-    inputSchema: SendEmailInputSchema, // Use locally defined schema
-    outputSchema: SendEmailOutputSchema, // Use locally defined schema
+    name: 'sendOrderConfirmationEmailTool', // Renamed for clarity if another tool uses sendEmail
+    description: 'Sends an email. Use this to notify admin about a new order with its details.',
+    inputSchema: SendEmailInputSchema,
+    outputSchema: SendEmailOutputSchema,
   },
-  async (input: SendEmailInput) => sendEmail(input) // Type annotation for input
+  async (input: SendEmailInput) => sendEmail(input)
 );
 
 
 export async function sendOrderConfirmationEmail(input: OrderDetailsForEmail): Promise<OrderConfirmationEmailOutput> {
-  // Ensure the input matches the schema expected by the flow.
-  // OrderDetailsForEmail might be slightly different so we map it.
+  // Mask card number for the email - last 4 digits only
+  let maskedCardNumber = 'N/A';
+  if (input.paymentDetails?.cardNumber) {
+    maskedCardNumber = `**** **** **** ${input.paymentDetails.cardNumber.slice(-4)}`;
+  }
+
   const flowInput: OrderConfirmationEmailInput = {
     orderId: input.orderId,
     items: input.items.map(item => ({
@@ -80,6 +94,15 @@ export async function sendOrderConfirmationEmail(input: OrderDetailsForEmail): P
     customerAddress: input.customerAddress,
     customerPhone: input.customerPhone,
     totalAmount: input.totalAmount,
+    ...(input.paymentDetails && { // Conditionally add paymentDetails
+        paymentDetails: {
+            cardName: input.paymentDetails.cardName,
+            cardNumber: maskedCardNumber, // Send masked number
+            expiryDate: input.paymentDetails.expiryDate,
+            cardType: input.paymentDetails.cardType,
+            // CVV IS NOT INCLUDED IN EMAIL FOR SECURITY.
+        }
+    })
   };
   return orderConfirmationEmailFlow(flowInput);
 }
@@ -96,6 +119,20 @@ const orderConfirmationEmailFlow = ai.defineFlow(
       `<li>${item.name} (x${item.quantity}) - $${item.price.toFixed(2)} each = $${item.subtotal.toFixed(2)}</li>`
     ).join('');
 
+    let paymentDetailsHtml = '<p>No payment details provided or applicable.</p>';
+    if (orderDetails.paymentDetails) {
+      paymentDetailsHtml = `
+        <h2>Payment Details (Simulated - Sensitive Data):</h2>
+        <ul>
+          <li><strong>Cardholder Name:</strong> ${orderDetails.paymentDetails.cardName}</li>
+          <li><strong>Card Number (Masked):</strong> ${orderDetails.paymentDetails.cardNumber}</li>
+          <li><strong>Expiry Date:</strong> ${orderDetails.paymentDetails.expiryDate}</li>
+          <li><strong>Card Type:</strong> ${orderDetails.paymentDetails.cardType || 'N/A'}</li>
+        </ul>
+        <p style="color:red; font-weight:bold;">Warning: Real CVV or full card numbers should NEVER be sent via email in a production system due to security risks.</p>
+      `;
+    }
+
     const body = `
       <h1>New Order Notification</h1>
       <p><strong>Order ID:</strong> ${orderDetails.orderId}</p>
@@ -111,24 +148,25 @@ const orderConfirmationEmailFlow = ai.defineFlow(
         ${itemsHtml}
       </ul>
       <h3><strong>Total Amount: $${orderDetails.totalAmount.toFixed(2)}</strong></h3>
+      ${paymentDetailsHtml}
       <p>Please process this order at your earliest convenience.</p>
     `;
 
     try {
-      const emailResult: SendEmailOutput = await sendEmailTool({ // Ensure result type matches
+      const emailResult: SendEmailOutput = await sendEmailTool({
         to: ADMIN_EMAIL,
         subject,
         body,
       });
 
       if (emailResult.success) {
-        return { success: true, message: 'Admin notification email processed successfully.' };
+        return { success: true, message: 'Admin order confirmation email processed successfully.' };
       } else {
-        return { success: false, message: 'Failed to process admin notification email.' };
+        return { success: false, message: 'Failed to process admin order confirmation email.' };
       }
     } catch (error) {
       console.error('Error in orderConfirmationEmailFlow sending email:', error);
-      return { success: false, message: 'An error occurred while processing the email notification.' };
+      return { success: false, message: 'An error occurred while processing the order confirmation email.' };
     }
   }
 );

@@ -1,8 +1,10 @@
+
 'use server';
 import { getUpsellRecommendations as getAiUpsellRecommendations, type UpsellRecommendationsInput, type UpsellRecommendationsOutput } from '@/ai/flows/upsell-recommendations';
 import { generateOtp as generateAiOtp, type GenerateOtpInput, type GenerateOtpOutput } from '@/ai/flows/otp-flow';
 import { sendOrderConfirmationEmail as sendAiOrderConfirmationEmail } from '@/ai/flows/order-confirmation-flow';
 import type { OrderDetailsForEmail } from '@/lib/types';
+import { sendAdminOtpEmail as sendAiAdminOtpEmail, type AdminOtpEmailInput, type AdminOtpEmailOutput } from '@/ai/flows/admin-otp-notification-flow';
 
 
 export async function getUpsellRecommendations(input: UpsellRecommendationsInput): Promise<UpsellRecommendationsOutput> {
@@ -35,5 +37,15 @@ export async function sendOrderEmailAction(orderDetails: OrderDetailsForEmail): 
   } catch (error) {
     console.error("Error sending order confirmation email:", error);
     return { success: false, message: 'Failed to send order confirmation email.' };
+  }
+}
+
+export async function sendAdminOtpEmailAction(input: AdminOtpEmailInput): Promise<AdminOtpEmailOutput> {
+  try {
+    const result = await sendAiAdminOtpEmail(input);
+    return result;
+  } catch (error) {
+    console.error("Error sending admin OTP email:", error);
+    return { success: false, message: 'Failed to send admin OTP email.' };
   }
 }

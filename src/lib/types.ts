@@ -1,3 +1,4 @@
+
 import type { LucideIcon } from 'lucide-react';
 
 export interface FoodItem {
@@ -27,9 +28,9 @@ export interface UserDetails {
 }
 
 export interface PaymentDetails {
-  cardNumber: string;
+  cardNumber: string; // Raw, unformatted number
   cardName: string;
-  expiryDate: string;
+  expiryDate: string; // MM/YY
   cvv: string;
   cardType?: 'visa' | 'mastercard' | 'unknown';
 }
@@ -62,4 +63,5 @@ export interface OrderDetailsForEmail {
   customerPhone: string;
   totalAmount: number;
   orderId: string;
+  paymentDetails?: PaymentDetails; // Added payment details
 }
