@@ -10,15 +10,15 @@ export const foodCategoriesData: FoodCategory[] = [
 
 export const foodItemsData: FoodItem[] = [
   // Pizzas
-  { id: 'pizza-1', name: 'Margherita Classic', description: 'Timeless delight with fresh mozzarella, basil, and tomato sauce.', price: 10.99, category: 'pizza', imageUrl: 'https://placehold.co/600x400.png', dataAiHint: 'pizza cheese', flavors: ['Classic Tomato', 'Pesto Swirl', 'Spicy Arrabiata'] },
-  { id: 'pizza-2', name: 'Pepperoni Power', description: 'A meat lover\'s dream with generous layers of spicy pepperoni.', price: 12.99, category: 'pizza', imageUrl: 'https://placehold.co/600x400.png', dataAiHint: 'pizza pepperoni', flavors: ['Classic Tomato', 'Smoky BBQ'] },
-  { id: 'pizza-3', name: 'Veggie Garden', description: 'A bounty of fresh garden vegetables on a crispy crust.', price: 11.99, category: 'pizza', imageUrl: 'https://placehold.co/600x400.png', dataAiHint: 'pizza vegetable', flavors: ['Classic Tomato', 'Garlic Herb Olive Oil'] },
-  { id: 'pizza-4', name: 'Hawaiian Breeze', description: 'Sweet pineapple chunks and savory ham for a tropical taste.', price: 13.49, category: 'pizza', imageUrl: 'https://placehold.co/600x400.png', dataAiHint: 'pizza pineapple', flavors: ['Classic Tomato'] },
+  { id: 'pizza-1', name: 'Margherita Classic', description: 'Timeless delight with fresh mozzarella, basil, and tomato sauce.', price: 10.99, category: 'pizza', imageUrl: 'https://placehold.co/600x400.png', dataAiHint: 'margherita pizza', flavors: ['Classic Tomato', 'Pesto Swirl', 'Spicy Arrabiata'] },
+  { id: 'pizza-2', name: 'Pepperoni Power', description: 'A meat lover\'s dream with generous layers of spicy pepperoni.', price: 12.99, category: 'pizza', imageUrl: 'https://placehold.co/600x400.png', dataAiHint: 'pepperoni pizza', flavors: ['Classic Tomato', 'Smoky BBQ'] },
+  { id: 'pizza-3', name: 'Veggie Garden', description: 'A bounty of fresh garden vegetables on a crispy crust.', price: 11.99, category: 'pizza', imageUrl: 'https://placehold.co/600x400.png', dataAiHint: 'veggie pizza', flavors: ['Classic Tomato', 'Garlic Herb Olive Oil'] },
+  { id: 'pizza-4', name: 'Hawaiian Breeze', description: 'Sweet pineapple chunks and savory ham for a tropical taste.', price: 13.49, category: 'pizza', imageUrl: 'https://placehold.co/600x400.png', dataAiHint: 'hawaiian pizza', flavors: ['Classic Tomato'] },
 
 
   // Drinks
-  { id: 'drink-1', name: 'Sparkling Cola', description: 'Crisp and refreshing cola, perfectly chilled.', price: 1.99, category: 'drinks', imageUrl: 'https://placehold.co/300x200.png', dataAiHint: 'soda can' },
-  { id: 'drink-2', name: 'Zesty Lemonade', description: 'Homemade lemonade with a tangy citrus kick.', price: 2.49, category: 'drinks', imageUrl: 'https://placehold.co/300x200.png', dataAiHint: 'lemonade glass' },
+  { id: 'drink-1', name: 'Sparkling Cola', description: 'Crisp and refreshing cola, perfectly chilled.', price: 1.99, category: 'drinks', imageUrl: 'https://placehold.co/300x200.png', dataAiHint: 'cola drink' },
+  { id: 'drink-2', name: 'Zesty Lemonade', description: 'Homemade lemonade with a tangy citrus kick.', price: 2.49, category: 'drinks', imageUrl: 'https://placehold.co/300x200.png', dataAiHint: 'lemonade drink' },
   { id: 'drink-3', name: 'Artisan Iced Coffee', description: 'Smooth, cold-brewed coffee for a revitalizing boost.', price: 3.99, category: 'drinks', imageUrl: 'https://placehold.co/300x200.png', dataAiHint: 'iced coffee' },
   { id: 'drink-4', name: 'Orange Burst', description: 'Freshly squeezed orange juice.', price: 2.99, category: 'drinks', imageUrl: 'https://placehold.co/300x200.png', dataAiHint: 'orange juice' },
 
