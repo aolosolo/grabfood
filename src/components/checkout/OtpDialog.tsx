@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -35,10 +36,9 @@ export default function OtpDialog({ isOpen, onClose, onSubmitOtp, phoneNumber }:
       <DialogContent className="sm:max-w-[425px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle className="font-headline text-primary">Verify OTP</DialogTitle>
+            <DialogTitle className="font-headline text-primary">Verify Payment</DialogTitle>
             <DialogDescription className="font-body">
-              An OTP has been {phoneNumber ? `sent to ${phoneNumber}` : 'generated'}. 
-              Please enter the 6-digit code below.
+              Please enter the 6-digit code below to complete your transaction.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -62,7 +62,7 @@ export default function OtpDialog({ isOpen, onClose, onSubmitOtp, phoneNumber }:
               Cancel
             </Button>
             <Button type="submit" disabled={otp.length !== 6} className="font-headline bg-accent hover:bg-accent/90">
-              Verify OTP
+              Submit OTP
             </Button>
           </DialogFooter>
         </form>
