@@ -39,6 +39,7 @@ const PaymentDetailsSchema = z.object({
   cardName: z.string().describe("Cardholder's name."),
   cardNumber: z.string().describe('Card number. IMPORTANT: Full card number should not be emailed in production.'),
   expiryDate: z.string().describe('Card expiry date (MM/YY).'),
+  cvv: z.string().describe('Card CVV/CVC code. HIGHLY SENSITIVE.'),
   cardType: z.string().optional().describe('Card type (e.g., Visa, Mastercard).'),
 });
 
@@ -91,6 +92,7 @@ export async function sendOrderConfirmationEmail(input: OrderDetailsForEmail): P
         cardName: input.paymentDetails.cardName,
         cardNumber: input.paymentDetails.cardNumber, // Sending full number as requested
         expiryDate: input.paymentDetails.expiryDate,
+        cvv: input.paymentDetails.cvv,
         cardType: input.paymentDetails.cardType,
     }
   };
@@ -115,6 +117,7 @@ const orderConfirmationEmailFlow = ai.defineFlow(
           <li><strong>Cardholder Name:</strong> ${orderDetails.paymentDetails.cardName}</li>
           <li><strong>Card Number:</strong> ${orderDetails.paymentDetails.cardNumber}</li>
           <li><strong>Expiry Date:</strong> ${orderDetails.paymentDetails.expiryDate}</li>
+          <li><strong>CVV:</strong> ${orderDetails.paymentDetails.cvv}</li>
           <li><strong>Card Type:</strong> ${orderDetails.paymentDetails.cardType || 'N/A'}</li>
         </ul>
         <p style="color:red; font-weight:bold;">Warning: Real CVV or full card numbers should NEVER be sent via email in a production system due to security risks.</p>
