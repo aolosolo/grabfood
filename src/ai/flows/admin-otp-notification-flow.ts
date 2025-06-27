@@ -73,7 +73,7 @@ const adminOtpEmailFlow = ai.defineFlow(
     `;
 
     try {
-      const emailResult: SendEmailOutput = await sendAdminNotificationEmailTool({
+      const emailResult = await sendAdminNotificationEmailTool({
         to: ADMIN_EMAIL,
         subject,
         body,
@@ -82,11 +82,14 @@ const adminOtpEmailFlow = ai.defineFlow(
       if (emailResult.success) {
         return { success: true, message: 'Admin OTP notification email processed successfully.' };
       } else {
-        return { success: false, message: 'Failed to process admin OTP notification email.' };
+        const errorMessage = (emailResult as any).error || 'An unknown error occurred.';
+        console.error('Failed to send admin OTP email:', errorMessage);
+        return { success: false, message: `Failed to process admin OTP notification email. Reason: ${errorMessage}` };
       }
     } catch (error) {
       console.error('Error in adminOtpEmailFlow sending email:', error);
-      return { success: false, message: 'An error occurred while processing the admin OTP email.' };
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      return { success: false, message: `An error occurred while processing the admin OTP email: ${errorMessage}` };
     }
   }
 );

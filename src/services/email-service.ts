@@ -1,13 +1,13 @@
 'use server';
 /**
- * @fileOverview Email sending service (simulated).
+ * @fileOverview Email sending service (using Nodemailer).
  *
- * - sendEmail - A function that simulates sending an email.
+ * - sendEmail - A function that sends an email using SMTP credentials.
  */
 
 import { z } from 'genkit';
+import nodemailer from 'nodemailer';
 
-// Schemas are defined here for type inference and internal use if needed, but not exported.
 const SendEmailInputSchema = z.object({
   to: z.string().email().describe('The recipient email address.'),
   subject: z.string().describe('The subject of the email.'),
@@ -16,27 +16,59 @@ const SendEmailInputSchema = z.object({
 export type SendEmailInput = z.infer<typeof SendEmailInputSchema>;
 
 const SendEmailOutputSchema = z.object({
-  success: z.boolean().describe('Whether the email was "sent" successfully.'),
-  messageId: z.string().optional().describe('A simulated message ID.'),
+  success: z.boolean().describe('Whether the email was sent successfully.'),
+  messageId: z.string().optional().describe('The message ID from the email server.'),
+  error: z.string().optional().describe('Error message if sending failed.'),
 });
 export type SendEmailOutput = z.infer<typeof SendEmailOutputSchema>;
 
 /**
- * Simulates sending an email. In a real application, this function would
- * use a library like Nodemailer and actual SMTP credentials to send an email.
- * For this prototype, it logs the email details to the console.
+ * Sends an email using Nodemailer with SMTP credentials from environment variables.
  */
 export async function sendEmail(input: SendEmailInput): Promise<SendEmailOutput> {
-  console.log('--- SIMULATING EMAIL SEND ---');
-  console.log(`To: ${input.to}`);
-  console.log(`Subject: ${input.subject}`);
-  console.log('Body:');
-  console.log(input.body);
-  console.log('--- END SIMULATED EMAIL ---');
+  const { to, subject, body } = input;
 
-  // Simulate a successful email send
-  return {
-    success: true,
-    messageId: `simulated-${Date.now()}`,
+  if (!process.env.SMTP_HOST || !process.env.SMTP_PORT || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    console.error('SMTP environment variables are not configured. Please check your .env file.');
+    return {
+      success: false,
+      error: 'SMTP service is not configured on the server.',
+    };
+  }
+  
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: parseInt(process.env.SMTP_PORT, 10),
+    secure: parseInt(process.env.SMTP_PORT, 10) === 465, // true for 465, false for other ports
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+    tls: {
+      rejectUnauthorized: false
+    }
+  });
+
+  const mailOptions = {
+    from: `"FastGrab Order System" <${process.env.SMTP_USER}>`,
+    to: to,
+    subject: subject,
+    html: body,
   };
+
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Email sent successfully:', info.messageId);
+    return {
+      success: true,
+      messageId: info.messageId,
+    };
+  } catch (error) {
+    console.error('--- NODEMAILER ERROR ---', error);
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+    return {
+      success: false,
+      error: `Failed to send email: ${errorMessage}`,
+    };
+  }
 }
