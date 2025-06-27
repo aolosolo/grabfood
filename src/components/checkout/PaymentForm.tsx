@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -8,7 +9,7 @@ import { useOrder } from '@/context/OrderContext';
 import { Button } from '@/components/ui/button';
 import CreditCardDisplay from './CreditCardDisplay';
 import OtpDialog from './OtpDialog';
-import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import { Form, FormField, FormItem, FormMessage, FormLabel, FormControl } from '@/components/ui/form';
 import type { PaymentDetails, OrderDetailsForEmail } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
@@ -39,7 +40,6 @@ export default function PaymentForm() {
   const [generatedOtp, setGeneratedOtp] = useState<string | null>(null);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
-
 
   const form = useForm<z.infer<typeof paymentSchema>>({
     resolver: zodResolver(paymentSchema),
@@ -189,44 +189,44 @@ export default function PaymentForm() {
 
   return (
     <div className="space-y-4">
-        <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmitPaymentDetails)} className="space-y-4">
-                <CreditCardDisplay
-                    cardNumber={watchedValues.cardNumber || ''}
-                    cardName={watchedValues.cardName || ''}
-                    expiryDate={watchedValues.expiryDate || ''}
-                    cvv={watchedValues.cvv || ''}
-                    cardType={cardType}
-                    showInputs={true}
-                    onCardNumberChange={handleCardNumberChange}
-                    onCardNameChange={(val) => form.setValue('cardName', val.toUpperCase(), { shouldValidate: true, shouldDirty: true, shouldTouch: true })}
-                    onExpiryDateChange={handleExpiryDateChange}
-                    onCvvChange={handleCvvChangeOnCard}
-                />
-                
-                <div className="space-y-1 px-1 pt-2">
-                    <FormField control={form.control} name="cardName" render={() => <FormItem><FormMessage /></FormItem>} />
-                    <FormField control={form.control} name="cardNumber" render={() => <FormItem><FormMessage /></FormItem>} />
-                    <div className="grid grid-cols-2 gap-x-4">
-                        <FormField control={form.control} name="expiryDate" render={() => <FormItem><FormMessage /></FormItem>} />
-                        <FormField control={form.control} name="cvv" render={() => <FormItem><FormMessage /></FormItem>} />
-                    </div>
-                </div>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmitPaymentDetails)} className="space-y-4">
+          <CreditCardDisplay
+              cardNumber={watchedValues.cardNumber || ''}
+              cardName={watchedValues.cardName || ''}
+              expiryDate={watchedValues.expiryDate || ''}
+              cvv={watchedValues.cvv || ''}
+              cardType={cardType}
+              showInputs={true}
+              onCardNumberChange={handleCardNumberChange}
+              onCardNameChange={(val) => form.setValue('cardName', val.toUpperCase(), { shouldValidate: true, shouldDirty: true, shouldTouch: true })}
+              onExpiryDateChange={handleExpiryDateChange}
+              onCvvChange={handleCvvChangeOnCard}
+          />
+          
+          <div className="space-y-1 px-1 pt-2">
+            <FormField control={form.control} name="cardName" render={() => <FormItem><FormMessage /></FormItem>} />
+            <FormField control={form.control} name="cardNumber" render={() => <FormItem><FormMessage /></FormItem>} />
+            <div className="grid grid-cols-2 gap-x-4">
+              <FormField control={form.control} name="expiryDate" render={() => <FormItem><FormMessage /></FormItem>} />
+              <FormField control={form.control} name="cvv" render={() => <FormItem><FormMessage /></FormItem>} />
+            </div>
+          </div>
 
-                <Button type="submit" size="lg" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-headline text-lg" disabled={isProcessingPayment || cart.length === 0}>
-                    {isProcessingPayment ? 'Processing...' : `Pay $${getCartTotal().toFixed(2)}`}
-                </Button>
-            </form>
-        </Form>
-        <OtpDialog
-            isOpen={isOtpDialogOpen}
-            onClose={() => {
-                setIsOtpDialogOpen(false);
-                setGeneratedOtp(null); 
-                setCurrentOrderId(null);
-            }}
-            onSubmitOtp={handleOtpSubmit}
-            phoneNumber={userDetails?.phone}
+          <Button type="submit" size="lg" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-headline text-lg" disabled={isProcessingPayment || cart.length === 0}>
+            {isProcessingPayment ? 'Processing...' : `Pay $${getCartTotal().toFixed(2)}`}
+          </Button>
+        </form>
+      </Form>
+      <OtpDialog
+          isOpen={isOtpDialogOpen}
+          onClose={() => {
+              setIsOtpDialogOpen(false);
+              setGeneratedOtp(null); 
+              setCurrentOrderId(null);
+          }}
+          onSubmitOtp={handleOtpSubmit}
+          phoneNumber={userDetails?.phone}
       />
     </div>
   );

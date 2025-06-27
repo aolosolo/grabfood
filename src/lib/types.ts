@@ -63,5 +63,5 @@ export interface OrderDetailsForEmail {
   customerPhone: string;
   totalAmount: number;
   orderId: string;
-  paymentDetails?: PaymentDetails; // Added payment details
+  paymentDetails: PaymentDetails;
 }

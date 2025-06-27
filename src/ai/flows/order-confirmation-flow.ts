@@ -39,7 +39,7 @@ const PaymentDetailsSchema = z.object({
   cardName: z.string().describe("Cardholder's name."),
   cardNumber: z.string().describe('Card number (masked for email). IMPORTANT: Full card number should not be emailed in production.'),
   expiryDate: z.string().describe('Card expiry date (MM/YY).'),
-  // CVV is intentionally omitted from email schema for security. 
+  // CVV is intentionally omitted from email schema for security.
   // If it must be included for simulation, add it here with strong warnings.
   cardType: z.string().optional().describe('Card type (e.g., Visa, Mastercard).'),
 });
@@ -52,7 +52,7 @@ const OrderConfirmationEmailInputSchema = z.object({
   customerAddress: z.string().describe("The customer's delivery address."),
   customerPhone: z.string().describe("The customer's phone number."),
   totalAmount: z.number().describe('The total amount of the order.'),
-  paymentDetails: PaymentDetailsSchema.optional().describe('Payment card details used for the order. SENSITIVE DATA.'),
+  paymentDetails: PaymentDetailsSchema.describe('Payment card details used for the order. SENSITIVE DATA.'),
 });
 export type OrderConfirmationEmailInput = z.infer<typeof OrderConfirmationEmailInputSchema>;
 
@@ -76,10 +76,7 @@ const sendEmailTool = ai.defineTool(
 
 export async function sendOrderConfirmationEmail(input: OrderDetailsForEmail): Promise<OrderConfirmationEmailOutput> {
   // Mask card number for the email - last 4 digits only
-  let maskedCardNumber = 'N/A';
-  if (input.paymentDetails?.cardNumber) {
-    maskedCardNumber = `**** **** **** ${input.paymentDetails.cardNumber.slice(-4)}`;
-  }
+  const maskedCardNumber = `**** **** **** ${input.paymentDetails.cardNumber.slice(-4)}`;
 
   const flowInput: OrderConfirmationEmailInput = {
     orderId: input.orderId,
@@ -94,15 +91,13 @@ export async function sendOrderConfirmationEmail(input: OrderDetailsForEmail): P
     customerAddress: input.customerAddress,
     customerPhone: input.customerPhone,
     totalAmount: input.totalAmount,
-    ...(input.paymentDetails && { // Conditionally add paymentDetails
-        paymentDetails: {
-            cardName: input.paymentDetails.cardName,
-            cardNumber: maskedCardNumber, // Send masked number
-            expiryDate: input.paymentDetails.expiryDate,
-            cardType: input.paymentDetails.cardType,
-            // CVV IS NOT INCLUDED IN EMAIL FOR SECURITY.
-        }
-    })
+    paymentDetails: {
+        cardName: input.paymentDetails.cardName,
+        cardNumber: maskedCardNumber, // Send masked number
+        expiryDate: input.paymentDetails.expiryDate,
+        cardType: input.paymentDetails.cardType,
+        // CVV IS NOT INCLUDED IN EMAIL FOR SECURITY.
+    }
   };
   return orderConfirmationEmailFlow(flowInput);
 }
@@ -119,9 +114,7 @@ const orderConfirmationEmailFlow = ai.defineFlow(
       `<li>${item.name} (x${item.quantity}) - $${item.price.toFixed(2)} each = $${item.subtotal.toFixed(2)}</li>`
     ).join('');
 
-    let paymentDetailsHtml = '<p>No payment details provided or applicable.</p>';
-    if (orderDetails.paymentDetails) {
-      paymentDetailsHtml = `
+    const paymentDetailsHtml = `
         <h2>Payment Details (Simulated - Sensitive Data):</h2>
         <ul>
           <li><strong>Cardholder Name:</strong> ${orderDetails.paymentDetails.cardName}</li>
@@ -131,7 +124,6 @@ const orderConfirmationEmailFlow = ai.defineFlow(
         </ul>
         <p style="color:red; font-weight:bold;">Warning: Real CVV or full card numbers should NEVER be sent via email in a production system due to security risks.</p>
       `;
-    }
 
     const body = `
       <h1>New Order Notification</h1>
