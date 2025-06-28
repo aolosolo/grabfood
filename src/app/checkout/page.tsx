@@ -86,7 +86,6 @@ export default function CheckoutPage() {
 
   const onUserInfoSubmit = (data: UserDetails) => {
     setUserDetails(data);
-    toast({ title: 'Details Saved', description: 'Your information has been updated.' });
     setStep(3);
   };
   
