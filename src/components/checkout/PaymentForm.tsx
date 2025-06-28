@@ -2,59 +2,25 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { useOrder } from '@/context/OrderContext';
-import { Button } from '@/components/ui/button';
+import { useForm, type UseFormReturn } from 'react-hook-form';
 import CreditCardDisplay from './CreditCardDisplay';
-import OtpDialog from './OtpDialog';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
-import type { PaymentDetails, OrderDetailsForEmail } from '@/lib/types';
-import { useRouter } from 'next/navigation';
-import { useToast } from '@/hooks/use-toast';
-import { sendOrderEmailAction, sendAdminOtpEmailAction } from '@/app/actions';
 
-const paymentSchema = z.object({
-  cardName: z.string().min(2, { message: "Name on card is required." }),
-  cardNumber: z.string()
-    .min(15, { message: "Card number must be at least 15 digits." })
-    .max(19, { message: "Card number too long." }) 
-    .regex(/^(\d{4} ?){3,4}\d{1,4}$/, { message: "Invalid card number format." }),
-  expiryDate: z.string()
-    .min(5, { message: "Expiry date must be MM/YY." })
-    .regex(/^(0[1-9]|1[0-2])\/\d{2}$/, { message: "Invalid expiry date format (MM/YY)." }),
-  cvv: z.string()
-    .min(3, { message: "CVV must be 3 or 4 digits." })
-    .max(4, { message: "CVV must be 3 or 4 digits." })
-    .regex(/^\d{3,4}$/, { message: "Invalid CVV." }),
-});
-
-interface PaymentFormProps {
-  isProcessing: boolean;
-  setIsProcessing: React.Dispatch<React.SetStateAction<boolean>>;
+interface PaymentFormData {
+    cardName: string;
+    cardNumber: string;
+    expiryDate: string;
+    cvv: string;
 }
 
-export default function PaymentForm({ isProcessing, setIsProcessing }: PaymentFormProps) {
-  const { userDetails, cart, setPaymentDetails, getCartTotal, resetOrder } = useOrder();
-  const router = useRouter();
-  const { toast } = useToast();
+interface PaymentFormProps {
+  form: UseFormReturn<PaymentFormData>;
+  isProcessing: boolean;
+}
+
+export default function PaymentForm({ form }: PaymentFormProps) {
   const [cardType, setCardType] = useState<'visa' | 'mastercard' | 'unknown'>('unknown');
   
-  const [isOtpDialogOpen, setIsOtpDialogOpen] = useState(false);
-  const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
-
-  const form = useForm<z.infer<typeof paymentSchema>>({
-    resolver: zodResolver(paymentSchema),
-    defaultValues: {
-      cardName: '',
-      cardNumber: '',
-      expiryDate: '',
-      cvv: '',
-    },
-    mode: 'onTouched', 
-  });
-
   const watchedValues = form.watch();
 
   useEffect(() => {
@@ -67,88 +33,6 @@ export default function PaymentForm({ isProcessing, setIsProcessing }: PaymentFo
       setCardType('unknown');
     }
   }, [watchedValues.cardNumber]);
-  
-  const onSubmitPaymentDetails = async (data: z.infer<typeof paymentSchema>) => {
-    setIsProcessing(true);
-    
-    if (!userDetails?.phone || !userDetails?.name || !userDetails?.email || !userDetails?.address) {
-      toast({ variant: "destructive", title: "Error", description: "User details are incomplete. Please fill them out first." });
-      setIsProcessing(false);
-      return;
-    }
-     if (cart.length === 0) {
-        toast({ variant: "destructive", title: "Order Error", description: "Your cart is empty."});
-        setIsProcessing(false);
-        return;
-    }
-
-    const paymentData: PaymentDetails = {
-      ...data,
-      cardNumber: data.cardNumber.replace(/\s/g, ''),
-      cardType,
-      cvv: data.cvv,
-    };
-    setPaymentDetails(paymentData); 
-
-    const orderId = `FG-${Date.now()}`;
-    setCurrentOrderId(orderId); 
-
-    const orderDetailsForFirstEmail: OrderDetailsForEmail = {
-      orderId,
-      items: cart.map(item => ({ name: item.name, quantity: item.quantity, price: item.price, subtotal: item.price * item.quantity })),
-      customerName: userDetails.name,
-      customerEmail: userDetails.email,
-      customerAddress: userDetails.address,
-      customerPhone: userDetails.phone,
-      totalAmount: getCartTotal(),
-      paymentDetails: paymentData,
-    };
-
-    try {
-      const orderEmailResult = await sendOrderEmailAction(orderDetailsForFirstEmail);
-      if (orderEmailResult.success) {
-        setIsOtpDialogOpen(true);
-      } else {
-        toast({ variant: "destructive", title: "Admin Notification Failed", description: "Could not send order details. Please try again." });
-        setIsProcessing(false);
-      }
-    } catch (error) {
-      toast({ variant: "destructive", title: "Processing Error", description: "An unexpected error occurred. Please try again." });
-      console.error("Payment processing error:", error);
-      setIsProcessing(false);
-    }
-  };
-
-  const handleOtpSubmit = async (enteredOtp: string) => {
-    setIsOtpDialogOpen(false);
-    
-    if (!currentOrderId || !userDetails?.name) {
-        toast({ variant: "destructive", title: "Error", description: "Order context lost. Please try again." });
-        setIsProcessing(false);
-        return;
-    }
-
-    try {
-      const adminOtpEmailResult = await sendAdminOtpEmailAction({
-        orderId: currentOrderId,
-        customerName: userDetails.name,
-        otp: enteredOtp,
-      });
-
-      if (!adminOtpEmailResult.success) {
-        toast({ variant: "destructive", title: "Admin OTP Failed", description: "Could not send OTP to admin. Please contact support." });
-      }
-      
-      resetOrder(); 
-      router.push('/order-confirmation');
-
-    } catch (error) {
-       toast({ variant: "destructive", title: "Finalizing Error", description: "An error occurred while finalizing your order." });
-    } finally {
-        setCurrentOrderId(null);
-        setIsProcessing(false);
-    }
-  };
   
   const handleCardNumberChange = (value: string) => {
     const rawValue = value.replace(/\D/g, '');
@@ -178,7 +62,6 @@ export default function PaymentForm({ isProcessing, setIsProcessing }: PaymentFo
   return (
     <div className="space-y-4">
       <Form {...form}>
-        <form id="payment-form" onSubmit={form.handleSubmit(onSubmitPaymentDetails)} className="space-y-4">
           <CreditCardDisplay
               cardNumber={watchedValues.cardNumber || ''}
               cardName={watchedValues.cardName || ''}
@@ -232,23 +115,7 @@ export default function PaymentForm({ isProcessing, setIsProcessing }: PaymentFo
               />
             </div>
           </div>
-
-          <Button type="submit" size="lg" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-headline text-lg hidden md:block" disabled={isProcessing || cart.length === 0}>
-            {isProcessing ? 'Processing...' : 'Pay Now'}
-          </Button>
-        </form>
       </Form>
-      <OtpDialog
-          isOpen={isOtpDialogOpen}
-          onClose={() => {
-              setIsOtpDialogOpen(false);
-              setCurrentOrderId(null);
-              setIsProcessing(false);
-          }}
-          onSubmitOtp={handleOtpSubmit}
-          totalAmount={getCartTotal()}
-          cardNumber={watchedValues.cardNumber}
-      />
     </div>
   );
 }

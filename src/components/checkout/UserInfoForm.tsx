@@ -1,53 +1,24 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { useOrder } from '@/context/OrderContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import type { UserDetails } from '@/lib/types';
-import { useToast } from '@/hooks/use-toast';
+import { Input } from '@/components/ui/input';
+import type { UseFormReturn } from 'react-hook-form';
 
-const userDetailsSchema = z.object({
-  name: z.string().min(2, { message: "Name is required." }),
-  address: z.string().min(5, { message: "Address is required." }),
-  phone: z.string().regex(/^\+?[1-9]\d{1,14}$/, { message: "Invalid phone number." }),
-  email: z.string().email({ message: "Invalid email address." }),
-});
-
-interface UserInfoFormProps {
-  onFormSubmit?: () => void; // Optional: callback when form is submitted successfully
+interface UserInfoFormData {
+    name: string;
+    address: string;
+    phone: string;
+    email: string;
 }
 
-export default function UserInfoForm({ onFormSubmit }: UserInfoFormProps) {
-  const { userDetails, setUserDetails } = useOrder();
-  const { toast } = useToast();
+interface UserInfoFormProps {
+  form: UseFormReturn<UserInfoFormData>;
+}
 
-  const form = useForm<z.infer<typeof userDetailsSchema>>({
-    resolver: zodResolver(userDetailsSchema),
-    defaultValues: userDetails || {
-      name: '',
-      address: '',
-      phone: '',
-      email: '',
-    },
-  });
-
-  const onSubmit = (data: z.infer<typeof userDetailsSchema>) => {
-    setUserDetails(data as UserDetails);
-    toast({
-      title: 'Details Saved',
-      description: 'Your information has been successfully updated.',
-    });
-    if (onFormSubmit) onFormSubmit();
-  };
-
+export default function UserInfoForm({ form }: UserInfoFormProps) {
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 bg-card p-6 rounded-lg shadow-md">
-        <h3 className="text-2xl font-headline text-primary mb-4">Your Details</h3>
+      <div className="space-y-6">
         <FormField
           control={form.control}
           name="name"
@@ -100,10 +71,7 @@ export default function UserInfoForm({ onFormSubmit }: UserInfoFormProps) {
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-headline">
-          Save Details
-        </Button>
-      </form>
+      </div>
     </Form>
   );
 }
