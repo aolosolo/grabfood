@@ -198,16 +198,18 @@ export default function CheckoutPage() {
       
       <div className="max-w-4xl mx-auto mt-8">
         {step === 1 && (
-          <Card>
-            <CardHeader><CardTitle>Review Your Order</CardTitle></CardHeader>
-            <CardContent>
-              <OrderSummary />
-              <UpsellSection />
-            </CardContent>
-            <CardFooter className="justify-end pt-6">
-              <Button onClick={() => setStep(2)} disabled={cart.length === 0}>Continue to Shipping</Button>
-            </CardFooter>
-          </Card>
+          <>
+            <Card>
+              <CardHeader><CardTitle>Review Your Order</CardTitle></CardHeader>
+              <CardContent>
+                <OrderSummary />
+              </CardContent>
+              <CardFooter className="justify-end pt-6">
+                <Button onClick={() => setStep(2)} disabled={cart.length === 0}>Continue to Shipping</Button>
+              </CardFooter>
+            </Card>
+            <UpsellSection />
+          </>
         )}
 
         {step === 2 && (

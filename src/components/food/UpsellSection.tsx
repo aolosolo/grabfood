@@ -3,12 +3,11 @@
 import { useEffect, useState } from 'react';
 import { useOrder } from '@/context/OrderContext';
 import { getUpsellRecommendations } from '@/app/actions';
-import { foodItemsData } from '@/lib/data'; // Assuming mock data has all items
+import { foodItemsData } from '@/lib/data';
 import type { FoodItem } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import Image from 'next/image';
-import { Sparkles, ShoppingCart } from 'lucide-react';
+import { Sparkles, Plus } from 'lucide-react';
 
 export default function UpsellSection() {
   const { cart, addToCart } = useOrder();
@@ -55,10 +54,12 @@ export default function UpsellSection() {
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
           {[...Array(3)].map((_, index) => (
-            <div key={index} className="p-4 border rounded-lg animate-pulse bg-muted/50">
-              <div className="w-full h-32 bg-muted rounded-md mb-2"></div>
-              <div className="h-4 bg-muted rounded w-3/4 mb-1"></div>
-              <div className="h-3 bg-muted rounded w-1/2"></div>
+             <div key={index} className="flex items-center gap-4 p-3 border rounded-lg bg-muted/50 animate-pulse">
+                <div className="w-12 h-12 bg-muted rounded-md shrink-0"></div>
+                <div className="flex-grow space-y-2">
+                    <div className="h-4 bg-muted rounded w-3/4"></div>
+                    <div className="h-3 bg-muted rounded w-1/2"></div>
+                </div>
             </div>
           ))}
         </div>
@@ -80,23 +81,18 @@ export default function UpsellSection() {
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {recommendations.map(item => (
-          <Card key={item.id} className="overflow-hidden flex flex-col">
-            <div className="relative w-full h-32">
-                <Image src={item.imageUrl} alt={item.name} fill className="object-cover" data-ai-hint={item.dataAiHint} sizes="150px"/>
-            </div>
-            <CardHeader className="pb-2 pt-3">
-              <CardTitle className="text-md font-headline">{item.name}</CardTitle>
-            </CardHeader>
-            <CardContent className="text-xs text-muted-foreground pb-2 pt-0 flex-grow">
-              <p>{item.description.substring(0,50)}...</p>
-            </CardContent>
-            <CardFooter className="flex justify-between items-center pt-2 pb-3 px-4">
-              <span className="font-bold text-primary font-headline text-sm">${item.price.toFixed(2)}</span>
-              <Button size="xs" variant="outline" onClick={() => handleAddRecommendationToCart(item)} className="text-accent border-accent hover:bg-accent/10">
-                <ShoppingCart className="mr-1 h-3 w-3" /> Add
+          <div key={item.id} className="flex items-center justify-between p-3 border rounded-lg bg-card shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center gap-4 overflow-hidden">
+                <Image src={item.imageUrl} alt={item.name} width={48} height={48} className="rounded-md object-cover shrink-0" data-ai-hint={item.dataAiHint} />
+                <div className="overflow-hidden">
+                  <h5 className="font-headline text-base truncate" title={item.name}>{item.name}</h5>
+                  <p className="font-body text-sm font-bold text-primary">${item.price.toFixed(2)}</p>
+                </div>
+              </div>
+              <Button size="sm" variant="outline" onClick={() => handleAddRecommendationToCart(item)} className="shrink-0 text-accent border-accent hover:bg-accent/10 ml-2">
+                <Plus className="mr-1 h-4 w-4" /> Add
               </Button>
-            </CardFooter>
-          </Card>
+          </div>
         ))}
       </div>
     </div>
