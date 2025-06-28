@@ -45,7 +45,7 @@ export default function HomePage() {
           </ScrollArea>
         </Tabs>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {filteredItems.map(item => (
             <FoodItemCard key={`${item.id}-${item.category}`} item={item} />
           ))}
