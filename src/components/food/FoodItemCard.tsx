@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import type { FoodItem } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardDescription, CardTitle } from '@/components/ui/card';
 import { useOrder } from '@/context/OrderContext';
 import { useState } from 'react';
 import { PlusCircle } from 'lucide-react';
@@ -28,45 +28,51 @@ export default function FoodItemCard({ item }: FoodItemCardProps) {
   };
 
   return (
-    <Card className="flex flex-col overflow-hidden h-full shadow-lg hover:shadow-xl transition-shadow duration-300">
-      <CardHeader className="p-0">
-        <div className="aspect-[3/2] relative w-full">
-          <Image
-            src={item.imageUrl}
-            alt={item.name}
-            fill
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            className="object-cover"
-            data-ai-hint={item.dataAiHint}
-          />
+    <Card className="flex flex-row sm:flex-col overflow-hidden h-full shadow-lg hover:shadow-xl transition-shadow duration-300">
+      {/* Image container */}
+      <div className="relative w-28 sm:w-full h-auto sm:aspect-[3/2] flex-shrink-0">
+        <Image
+          src={item.imageUrl}
+          alt={item.name}
+          fill
+          sizes="(max-width: 639px) 30vw, (max-width: 1023px) 50vw, 25vw"
+          className="object-cover"
+          data-ai-hint={item.dataAiHint}
+        />
+      </div>
+      
+      {/* Content wrapper */}
+      <div className="flex flex-col flex-grow p-3 sm:p-4 justify-between">
+        <div>
+          <CardTitle className="text-base sm:text-xl font-headline leading-tight">{item.name}</CardTitle>
+          <CardDescription className="text-xs text-muted-foreground mt-1 font-body hidden sm:block">
+            {item.description}
+          </CardDescription>
+
+          {item.category === 'pizza' && item.flavors && item.flavors.length > 0 && (
+            <div className="mt-2 sm:my-3">
+              <Label htmlFor={`flavor-${item.id}`} className="sr-only sm:not-sr-only text-xs sm:text-sm font-medium font-body">Flavor:</Label>
+              <Select value={selectedFlavor} onValueChange={setSelectedFlavor}>
+                <SelectTrigger id={`flavor-${item.id}`} className="w-full mt-1 h-8 text-xs sm:h-9 sm:text-sm">
+                  <SelectValue placeholder="Select a flavor" />
+                </SelectTrigger>
+                <SelectContent>
+                  {item.flavors.map(flavor => (
+                    <SelectItem key={flavor} value={flavor} className="text-xs sm:text-sm">{flavor}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
-      </CardHeader>
-      <CardContent className="p-4 flex-grow">
-        <CardTitle className="text-xl mb-1 font-headline">{item.name}</CardTitle>
-        <CardDescription className="text-sm text-muted-foreground mb-2 font-body">{item.description}</CardDescription>
-        
-        {item.category === 'pizza' && item.flavors && item.flavors.length > 0 && (
-          <div className="my-3">
-            <Label htmlFor={`flavor-${item.id}`} className="text-sm font-medium font-body">Choose Flavor:</Label>
-            <Select value={selectedFlavor} onValueChange={setSelectedFlavor}>
-              <SelectTrigger id={`flavor-${item.id}`} className="w-full mt-1">
-                <SelectValue placeholder="Select a flavor" />
-              </SelectTrigger>
-              <SelectContent>
-                {item.flavors.map(flavor => (
-                  <SelectItem key={flavor} value={flavor}>{flavor}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-      </CardContent>
-      <CardFooter className="p-4 flex-col items-start w-full border-t mt-auto">
-        <p className="text-lg font-bold text-primary font-headline mb-2">${item.price.toFixed(2)}</p>
-        <Button onClick={handleAddToCart} variant="default" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
-          <PlusCircle className="mr-2 h-4 w-4" /> Add to Cart
-        </Button>
-      </CardFooter>
+
+        <div className="flex items-center justify-between mt-2">
+          <p className="text-base sm:text-lg font-bold text-primary font-headline">${item.price.toFixed(2)}</p>
+          <Button onClick={handleAddToCart} size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground whitespace-nowrap text-xs h-8 px-2 sm:text-sm sm:h-9 sm:px-3">
+            <PlusCircle className="mr-1 h-4 w-4" /> Add
+          </Button>
+        </div>
+      </div>
     </Card>
   );
 }
