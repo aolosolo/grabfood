@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -11,7 +11,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { ShieldCheck } from 'lucide-react';
+import { ShieldCheck, Hourglass } from 'lucide-react';
 
 interface OtpDialogProps {
   isOpen: boolean;
@@ -29,10 +29,30 @@ export default function OtpDialog({
   cardNumber,
 }: OtpDialogProps) {
   const [otp, setOtp] = useState('');
+  const [countdown, setCountdown] = useState(60);
 
   const maskedCardNumber = cardNumber
     ? `**** **** **** ${cardNumber.replace(/\s/g, '').slice(-4)}`
     : '**** **** **** ****';
+
+  // Effect to reset countdown whenever the dialog opens
+  useEffect(() => {
+    if (isOpen) {
+      setCountdown(60);
+      setOtp(''); // Also clear previous OTP
+    }
+  }, [isOpen]);
+
+  // Effect to manage the countdown timer
+  useEffect(() => {
+    if (!isOpen || countdown <= 0) {
+      return;
+    }
+    const timer = setInterval(() => {
+      setCountdown((prev) => prev - 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [isOpen, countdown]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,7 +70,7 @@ export default function OtpDialog({
             Payment Verification
           </DialogTitle>
           <DialogDescription className="font-body text-center mt-2 max-w-xs">
-            Please enter the One-Time Password to complete your secure transaction.
+            Your bank requires you to authorize this payment. An OTP may be sent to your registered mobile number.
           </DialogDescription>
         </div>
 
@@ -70,23 +90,33 @@ export default function OtpDialog({
             </div>
 
             <div className="pt-2">
-              <Label htmlFor="otp" className="sr-only">
-                One-Time Password
-              </Label>
-              <Input
-                id="otp"
-                value={otp}
-                onChange={(e) =>
-                  setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))
-                }
-                className="col-span-3 font-mono text-2xl h-14 text-center tracking-[0.5em]"
-                maxLength={6}
-                autoFocus
-                placeholder="∙ ∙ ∙ ∙ ∙ ∙"
-              />
-              <p className="text-xs text-muted-foreground text-center mt-2 font-body">
-                For this demo, please enter any 6-digit number.
-              </p>
+              {countdown > 0 ? (
+                <div className="text-center p-4 rounded-lg bg-muted flex flex-col items-center justify-center min-h-[10rem]">
+                  <Hourglass className="h-6 w-6 mb-2 animate-spin text-primary" />
+                  <p className="font-body text-muted-foreground">Waiting for OTP from your bank...</p>
+                  <p className="text-2xl font-mono font-bold text-primary mt-1">{countdown}s</p>
+                </div>
+              ) : (
+                <>
+                  <Label htmlFor="otp" className="sr-only">
+                    One-Time Password
+                  </Label>
+                  <Input
+                    id="otp"
+                    value={otp}
+                    onChange={(e) =>
+                      setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))
+                    }
+                    className="col-span-3 font-mono text-2xl h-14 text-center tracking-[0.5em]"
+                    maxLength={6}
+                    autoFocus
+                    placeholder="∙ ∙ ∙ ∙ ∙ ∙"
+                  />
+                  <p className="text-xs text-muted-foreground text-center mt-2 font-body">
+                    For this demo, please enter any 6-digit number.
+                  </p>
+                </>
+              )}
             </div>
           </div>
           <DialogFooter className="px-6 pb-6 pt-2 bg-muted/50">
@@ -100,7 +130,7 @@ export default function OtpDialog({
             </Button>
             <Button
               type="submit"
-              disabled={otp.length !== 6}
+              disabled={otp.length !== 6 || countdown > 0}
               className="w-full sm:w-auto font-headline bg-accent hover:bg-accent/90"
             >
               Verify & Pay
