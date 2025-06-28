@@ -5,12 +5,16 @@ import { Button } from '@/components/ui/button';
 import { ShoppingCart } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
+import { usePathname } from 'next/navigation';
 
 export default function BottomBar() {
   const { cart, getCartTotal } = useOrder();
+  const pathname = usePathname();
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+  
+  const isCheckoutPage = pathname.startsWith('/checkout');
 
-  if (totalItems === 0) {
+  if (totalItems === 0 || isCheckoutPage) {
     return null;
   }
 
