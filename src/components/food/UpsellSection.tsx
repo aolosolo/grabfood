@@ -6,7 +6,7 @@ import { getUpsellRecommendations } from '@/app/actions';
 import { foodItemsData } from '@/lib/data'; // Assuming mock data has all items
 import type { FoodItem } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import Image from 'next/image';
 import { Sparkles, ShoppingCart } from 'lucide-react';
 
@@ -47,14 +47,12 @@ export default function UpsellSection() {
 
   if (isLoading) {
     return (
-      <Card className="mt-8 shadow-lg">
-        <CardHeader>
-          <CardTitle className="font-headline text-xl text-primary flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-accent" />
-            <span>Finding some extras for you...</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="mt-8 pt-6 border-t">
+        <h3 className="font-headline text-xl text-primary flex items-center gap-2">
+          <Sparkles className="h-5 w-5 text-accent animate-pulse" />
+          <span>Finding some extras for you...</span>
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
           {[...Array(3)].map((_, index) => (
             <div key={index} className="p-4 border rounded-lg animate-pulse bg-muted/50">
               <div className="w-full h-32 bg-muted rounded-md mb-2"></div>
@@ -62,27 +60,24 @@ export default function UpsellSection() {
               <div className="h-3 bg-muted rounded w-1/2"></div>
             </div>
           ))}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     );
   }
   
-  if (recommendations.length === 0 && cart.length > 0 && !isLoading) {
+  if (recommendations.length === 0) {
      return null; // Don't show if no recommendations or still loading
   }
-  if (recommendations.length === 0) return null;
-
 
   return (
-    <Card className="mt-8 shadow-lg">
-      <CardHeader>
-        <CardTitle className="font-headline text-xl text-primary flex items-center gap-2">
-           <Sparkles className="h-5 w-5 text-accent" />
-          <span>You might also like...</span>
-        </CardTitle>
-        <CardDescription className="font-body">Enhance your meal with these popular additions!</CardDescription>
-      </CardHeader>
-      <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="mt-8 pt-6 border-t">
+      <h3 className="font-headline text-xl text-primary flex items-center gap-2">
+         <Sparkles className="h-5 w-5 text-accent" />
+        <span>You might also like...</span>
+      </h3>
+      <p className="font-body text-sm text-muted-foreground mb-4">Enhance your meal with these popular additions!</p>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {recommendations.map(item => (
           <Card key={item.id} className="overflow-hidden flex flex-col">
             <div className="relative w-full h-32">
@@ -102,7 +97,7 @@ export default function UpsellSection() {
             </CardFooter>
           </Card>
         ))}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

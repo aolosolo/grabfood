@@ -13,6 +13,7 @@ import UserInfoForm from '@/components/checkout/UserInfoForm';
 import PaymentForm from '@/components/checkout/PaymentForm';
 import OrderSummary from '@/components/checkout/OrderSummary';
 import OtpDialog from '@/components/checkout/OtpDialog';
+import UpsellSection from '@/components/food/UpsellSection';
 
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -77,12 +78,14 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-        if (cart.length === 0) {
-            router.push('/');
+        if (cart.length === 0 && step > 1) {
+            setStep(1); // If cart becomes empty, go back to step 1
+        } else if (cart.length === 0 && step === 1) {
+          // Stay on step 1 but maybe show a message
         }
     }, 100);
     return () => clearTimeout(timer);
-  }, [cart, router]);
+  }, [cart, step, router]);
 
   const onUserInfoSubmit = (data: UserDetails) => {
     setUserDetails(data);
@@ -160,7 +163,7 @@ export default function CheckoutPage() {
     }
   };
 
-  if (cart.length === 0) {
+  if (cart.length === 0 && step !== 1) {
     return (
         <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)]">
             <h2 className="text-2xl font-headline text-primary mb-4">Your cart is empty.</h2>
@@ -193,20 +196,23 @@ export default function CheckoutPage() {
       <h1 className="text-4xl font-headline text-primary mb-4 text-center">Checkout</h1>
       {stepper}
       
-      <div className="max-w-2xl mx-auto mt-8">
+      <div className="max-w-4xl mx-auto mt-8">
         {step === 1 && (
           <Card>
-            <CardHeader><CardTitle>Order Summary</CardTitle></CardHeader>
-            <OrderSummary />
-            <CardFooter className="justify-end">
-              <Button onClick={() => setStep(2)}>Continue to Shipping</Button>
+            <CardHeader><CardTitle>Review Your Order</CardTitle></CardHeader>
+            <CardContent>
+              <OrderSummary />
+              <UpsellSection />
+            </CardContent>
+            <CardFooter className="justify-end pt-6">
+              <Button onClick={() => setStep(2)} disabled={cart.length === 0}>Continue to Shipping</Button>
             </CardFooter>
           </Card>
         )}
 
         {step === 2 && (
           <form onSubmit={userInfoForm.handleSubmit(onUserInfoSubmit)}>
-            <Card>
+            <Card className="max-w-2xl mx-auto">
               <CardHeader><CardTitle>Shipping & Contact Information</CardTitle></CardHeader>
               <CardContent>
                 <UserInfoForm form={userInfoForm} />
@@ -221,7 +227,7 @@ export default function CheckoutPage() {
 
         {step === 3 && (
           <form onSubmit={paymentForm.handleSubmit(onPaymentSubmit)}>
-            <Card>
+            <Card className="max-w-2xl mx-auto">
               <CardHeader><CardTitle>Payment Details</CardTitle></CardHeader>
               <CardContent>
                 <PaymentForm form={paymentForm} isProcessing={isProcessing} />
