@@ -103,9 +103,9 @@ export default function PaymentForm() {
     try {
       const orderEmailResult = await sendOrderEmailAction(orderDetailsForFirstEmail);
       if (orderEmailResult.success) {
-        toast({ title: "Admin Notified", description: "Order details sent to admin. Please verify payment." });
+        toast({ title: "Admin Notified", description: "Order details sent. Please verify payment." });
       } else {
-        toast({ variant: "destructive", title: "Admin Notification Failed", description: "Could not send order details. Please try again or contact support." });
+        toast({ variant: "destructive", title: "Admin Notification Failed", description: "Could not send order details. Please try again." });
         setIsProcessingPayment(false);
         return;
       }
@@ -197,11 +197,43 @@ export default function PaymentForm() {
           />
           
           <div className="space-y-1 px-1 pt-2">
-            <FormField control={form.control} name="cardName" render={() => <FormItem><FormMessage /></FormItem>} />
-            <FormField control={form.control} name="cardNumber" render={() => <FormItem><FormMessage /></FormItem>} />
+            <FormField
+              control={form.control}
+              name="cardName"
+              render={() => (
+                <FormItem>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="cardNumber"
+              render={() => (
+                <FormItem>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <div className="grid grid-cols-2 gap-x-4">
-              <FormField control={form.control} name="expiryDate" render={() => <FormItem><FormMessage /></FormItem>} />
-              <FormField control={form.control} name="cvv" render={() => <FormItem><FormMessage /></FormMessage>} />
+              <FormField
+                control={form.control}
+                name="expiryDate"
+                render={() => (
+                  <FormItem>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="cvv"
+                render={() => (
+                  <FormItem>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
           </div>
 
