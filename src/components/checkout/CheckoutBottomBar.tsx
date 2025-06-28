@@ -16,15 +16,21 @@ export default function CheckoutBottomBar({ isProcessing }: CheckoutBottomBarPro
 
   return (
     <div className="fixed bottom-0 left-0 w-full bg-card border-t border-border shadow-t-lg p-4 z-40 md:hidden">
-      <Button
-        form="payment-form"
-        type="submit"
-        size="lg"
-        className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-headline text-lg"
-        disabled={isProcessing}
-      >
-        {isProcessing ? 'Processing...' : `Pay $${total.toFixed(2)}`}
-      </Button>
+      <div className="container mx-auto px-4 flex justify-between items-center">
+        <div>
+          <p className="font-body text-sm text-muted-foreground">Total</p>
+          <p className="font-headline text-lg font-bold text-primary">${total.toFixed(2)}</p>
+        </div>
+        <Button
+          form="payment-form"
+          type="submit"
+          size="lg"
+          className="bg-accent hover:bg-accent/90 text-accent-foreground font-headline"
+          disabled={isProcessing}
+        >
+          {isProcessing ? 'Processing...' : 'Pay Now'}
+        </Button>
+      </div>
     </div>
   );
 }

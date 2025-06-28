@@ -234,7 +234,7 @@ export default function PaymentForm({ isProcessing, setIsProcessing }: PaymentFo
           </div>
 
           <Button type="submit" size="lg" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-headline text-lg hidden md:block" disabled={isProcessing || cart.length === 0}>
-            {isProcessing ? 'Processing...' : `Pay $${getCartTotal().toFixed(2)}`}
+            {isProcessing ? 'Processing...' : 'Pay Now'}
           </Button>
         </form>
       </Form>

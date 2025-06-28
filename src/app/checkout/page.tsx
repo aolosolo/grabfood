@@ -1,9 +1,9 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
 import UserInfoForm from '@/components/checkout/UserInfoForm';
 import PaymentForm from '@/components/checkout/PaymentForm';
+import OrderSummary from '@/components/checkout/OrderSummary';
 import { useOrder } from '@/context/OrderContext';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -38,7 +38,10 @@ export default function CheckoutPage() {
   return (
     <div className="w-full">
       <h1 className="text-4xl font-headline text-primary mb-8 text-center">Checkout</h1>
-      <div className="max-w-2xl mx-auto space-y-8">
+      
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start max-w-6xl mx-auto">
+        
+        <div className="space-y-8 lg:order-1">
           <Card className="shadow-lg rounded-none sm:rounded-lg">
             <CardHeader>
               <CardTitle className="font-headline text-2xl text-primary">Shipping & Contact Information</CardTitle>
@@ -56,6 +59,12 @@ export default function CheckoutPage() {
               <PaymentForm isProcessing={isProcessingPayment} setIsProcessing={setIsProcessingPayment} />
             </CardContent>
           </Card>
+        </div>
+
+        <div className="hidden lg:block lg:sticky lg:top-24 lg:order-2">
+          <OrderSummary />
+        </div>
+
       </div>
       <CheckoutBottomBar isProcessing={isProcessingPayment} />
     </div>
