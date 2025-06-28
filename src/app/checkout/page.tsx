@@ -1,17 +1,20 @@
 
 'use client';
 
+import { useState, useEffect } from 'react';
 import UserInfoForm from '@/components/checkout/UserInfoForm';
 import PaymentForm from '@/components/checkout/PaymentForm';
 import CartDisplay from '@/components/cart/CartDisplay';
 import { useOrder } from '@/context/OrderContext';
-import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import CheckoutBottomBar from '@/components/checkout/CheckoutBottomBar';
+
 
 export default function CheckoutPage() {
   const { cart } = useOrder();
   const router = useRouter();
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   useEffect(() => {
     // Redirect to home page if cart is empty after a brief moment (to allow context to load)
@@ -52,7 +55,7 @@ export default function CheckoutPage() {
               <CardTitle className="font-headline text-2xl text-primary">Payment Details</CardTitle>
             </CardHeader>
             <CardContent>
-              <PaymentForm />
+              <PaymentForm isProcessing={isProcessingPayment} setIsProcessing={setIsProcessingPayment} />
             </CardContent>
           </Card>
         </div>
@@ -61,6 +64,7 @@ export default function CheckoutPage() {
            <CartDisplay />
         </div>
       </div>
+      <CheckoutBottomBar isProcessing={isProcessingPayment} />
     </div>
   );
 }

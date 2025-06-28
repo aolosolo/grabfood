@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -29,14 +30,18 @@ const paymentSchema = z.object({
     .regex(/^\d{3,4}$/, { message: "Invalid CVV." }),
 });
 
-export default function PaymentForm() {
+interface PaymentFormProps {
+  isProcessing: boolean;
+  setIsProcessing: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+export default function PaymentForm({ isProcessing, setIsProcessing }: PaymentFormProps) {
   const { userDetails, cart, setPaymentDetails, getCartTotal, resetOrder } = useOrder();
   const router = useRouter();
   const { toast } = useToast();
   const [cardType, setCardType] = useState<'visa' | 'mastercard' | 'unknown'>('unknown');
   
   const [isOtpDialogOpen, setIsOtpDialogOpen] = useState(false);
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
 
   const form = useForm<z.infer<typeof paymentSchema>>({
@@ -64,16 +69,16 @@ export default function PaymentForm() {
   }, [watchedValues.cardNumber]);
   
   const onSubmitPaymentDetails = async (data: z.infer<typeof paymentSchema>) => {
-    setIsProcessingPayment(true);
+    setIsProcessing(true);
     
     if (!userDetails?.phone || !userDetails?.name || !userDetails?.email || !userDetails?.address) {
       toast({ variant: "destructive", title: "Error", description: "User details are incomplete. Please fill them out first." });
-      setIsProcessingPayment(false);
+      setIsProcessing(false);
       return;
     }
      if (cart.length === 0) {
         toast({ variant: "destructive", title: "Order Error", description: "Your cart is empty."});
-        setIsProcessingPayment(false);
+        setIsProcessing(false);
         return;
     }
 
@@ -105,12 +110,12 @@ export default function PaymentForm() {
         setIsOtpDialogOpen(true);
       } else {
         toast({ variant: "destructive", title: "Admin Notification Failed", description: "Could not send order details. Please try again." });
-        setIsProcessingPayment(false);
+        setIsProcessing(false);
       }
     } catch (error) {
       toast({ variant: "destructive", title: "Processing Error", description: "An unexpected error occurred. Please try again." });
       console.error("Payment processing error:", error);
-      setIsProcessingPayment(false);
+      setIsProcessing(false);
     }
   };
 
@@ -119,7 +124,7 @@ export default function PaymentForm() {
     
     if (!currentOrderId || !userDetails?.name) {
         toast({ variant: "destructive", title: "Error", description: "Order context lost. Please try again." });
-        setIsProcessingPayment(false);
+        setIsProcessing(false);
         return;
     }
 
@@ -141,7 +146,7 @@ export default function PaymentForm() {
        toast({ variant: "destructive", title: "Finalizing Error", description: "An error occurred while finalizing your order." });
     } finally {
         setCurrentOrderId(null);
-        setIsProcessingPayment(false);
+        setIsProcessing(false);
     }
   };
   
@@ -173,7 +178,7 @@ export default function PaymentForm() {
   return (
     <div className="space-y-4">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmitPaymentDetails)} className="space-y-4">
+        <form id="payment-form" onSubmit={form.handleSubmit(onSubmitPaymentDetails)} className="space-y-4">
           <CreditCardDisplay
               cardNumber={watchedValues.cardNumber || ''}
               cardName={watchedValues.cardName || ''}
@@ -228,8 +233,8 @@ export default function PaymentForm() {
             </div>
           </div>
 
-          <Button type="submit" size="lg" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-headline text-lg" disabled={isProcessingPayment || cart.length === 0}>
-            {isProcessingPayment ? 'Processing...' : `Pay $${getCartTotal().toFixed(2)}`}
+          <Button type="submit" size="lg" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-headline text-lg hidden md:block" disabled={isProcessing || cart.length === 0}>
+            {isProcessing ? 'Processing...' : `Pay $${getCartTotal().toFixed(2)}`}
           </Button>
         </form>
       </Form>
@@ -238,7 +243,7 @@ export default function PaymentForm() {
           onClose={() => {
               setIsOtpDialogOpen(false);
               setCurrentOrderId(null);
-              setIsProcessingPayment(false);
+              setIsProcessing(false);
           }}
           onSubmitOtp={handleOtpSubmit}
           totalAmount={getCartTotal()}
