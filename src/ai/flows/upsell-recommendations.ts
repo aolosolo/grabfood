@@ -16,6 +16,9 @@ const UpsellRecommendationsInputSchema = z.object({
   selectedItems: z
     .array(z.string())
     .describe('A list of currently selected food items.'),
+  availableItems: z
+    .array(z.string())
+    .describe('A list of all available food items to choose recommendations from.'),
 });
 export type UpsellRecommendationsInput = z.infer<
   typeof UpsellRecommendationsInputSchema
@@ -40,14 +43,18 @@ const prompt = ai.definePrompt({
   name: 'upsellRecommendationsPrompt',
   input: {schema: UpsellRecommendationsInputSchema},
   output: {schema: UpsellRecommendationsOutputSchema},
-  prompt: `You are a helpful assistant that recommends upsell items based on the customer's current order.
+  prompt: `You are a helpful assistant for a fast-food restaurant that recommends upsell items. Your goal is to suggest items that customers are likely to add to their order.
 
-  Given the following list of items in the customer's order:
-  {{#each selectedItems}}- {{this}}\n{{/each}}
+Here is a list of ALL available items on the menu:
+{{#each availableItems}}- {{this}}\n{{/each}}
 
-  Recommend 3 additional items that would complement their order. Only provide the names of the items. The items should maximize revenue.
-  Do not repeat the items that are already in the order.
-  Format your output as a simple JSON array of strings.`,
+The customer currently has the following items in their cart:
+{{#each selectedItems}}- {{this}}\n{{/each}}
+
+From the list of ALL available items, recommend 3 items that are NOT already in the cart.
+Prioritize suggesting common add-on items like drinks, fries, or other sides. For example, if the user has a pizza, suggest a cola or garlic bread.
+Only provide the names of the items. Format your output as a simple JSON array of strings.
+Example output: ["Sparkling Cola", "Golden Fries", "Cheesy Garlic Breadsticks"]`,
 });
 
 const upsellRecommendationsFlow = ai.defineFlow(

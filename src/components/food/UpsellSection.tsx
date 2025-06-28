@@ -20,8 +20,9 @@ export default function UpsellSection() {
       const fetchRecommendations = async () => {
         setIsLoading(true);
         const selectedItems = cart.map(item => item.name);
+        const availableItems = foodItemsData.map(item => item.name);
         try {
-          const result = await getUpsellRecommendations({ selectedItems });
+          const result = await getUpsellRecommendations({ selectedItems, availableItems });
           // Map recommendation names back to full FoodItem objects from mock data
           const recommendedItems = result.recommendations
             .map(name => foodItemsData.find(item => item.name === name && !cart.some(cartItem => cartItem.id === item.id)))

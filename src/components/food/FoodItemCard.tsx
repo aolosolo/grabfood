@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useOrder } from '@/context/OrderContext';
 import { useState } from 'react';
-import { PlusCircle, ShoppingCart } from 'lucide-react';
+import { PlusCircle } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 
@@ -61,10 +61,10 @@ export default function FoodItemCard({ item }: FoodItemCardProps) {
           </div>
         )}
       </CardContent>
-      <CardFooter className="p-4 flex justify-between items-center border-t">
-        <p className="text-lg font-bold text-primary font-headline">${item.price.toFixed(2)}</p>
-        <Button onClick={handleAddToCart} variant="default" size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground">
-          <ShoppingCart className="mr-2 h-4 w-4" /> Add
+      <CardFooter className="p-4 flex-col items-start w-full border-t mt-auto">
+        <p className="text-lg font-bold text-primary font-headline mb-2">${item.price.toFixed(2)}</p>
+        <Button onClick={handleAddToCart} variant="default" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
+          <PlusCircle className="mr-2 h-4 w-4" /> Add to Cart
         </Button>
       </CardFooter>
     </Card>
