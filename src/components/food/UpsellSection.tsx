@@ -9,11 +9,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Image from 'next/image';
 import { Sparkles, ShoppingCart } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
 
 export default function UpsellSection() {
   const { cart, addToCart } = useOrder();
-  const { toast } = useToast();
   const [recommendations, setRecommendations] = useState<FoodItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -45,10 +43,6 @@ export default function UpsellSection() {
 
   const handleAddRecommendationToCart = (item: FoodItem) => {
     addToCart(item);
-    toast({
-      title: `${item.name} added to cart!`,
-      description: "Great choice for an upsell!",
-    });
   };
 
   if (isLoading) {

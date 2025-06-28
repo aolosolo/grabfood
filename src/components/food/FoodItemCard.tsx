@@ -9,7 +9,6 @@ import { useState } from 'react';
 import { PlusCircle, ShoppingCart } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/hooks/use-toast';
 
 interface FoodItemCardProps {
   item: FoodItem;
@@ -17,7 +16,6 @@ interface FoodItemCardProps {
 
 export default function FoodItemCard({ item }: FoodItemCardProps) {
   const { addToCart } = useOrder();
-  const { toast } = useToast();
   const [selectedFlavor, setSelectedFlavor] = useState<string | undefined>(item.flavors ? item.flavors[0] : undefined);
 
   const handleAddToCart = () => {
@@ -27,11 +25,6 @@ export default function FoodItemCard({ item }: FoodItemCardProps) {
     };
     const uniqueIdSuffix = item.category === 'pizza' && selectedFlavor ? selectedFlavor.replace(/\s+/g, '-') : undefined;
     addToCart(itemToAdd, 1, uniqueIdSuffix);
-    toast({
-      title: `${item.name} added to cart!`,
-      description: item.category === 'pizza' && selectedFlavor ? `Flavor: ${selectedFlavor}` : undefined,
-      variant: 'default',
-    });
   };
 
   return (

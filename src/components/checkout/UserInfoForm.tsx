@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import type { UserDetails } from '@/lib/types';
-import { useToast } from '@/hooks/use-toast';
 
 const userDetailsSchema = z.object({
   name: z.string().min(2, { message: "Name is required." }),
@@ -23,7 +22,6 @@ interface UserInfoFormProps {
 
 export default function UserInfoForm({ onFormSubmit }: UserInfoFormProps) {
   const { userDetails, setUserDetails } = useOrder();
-  const { toast } = useToast();
 
   const form = useForm<z.infer<typeof userDetailsSchema>>({
     resolver: zodResolver(userDetailsSchema),
@@ -37,7 +35,6 @@ export default function UserInfoForm({ onFormSubmit }: UserInfoFormProps) {
 
   const onSubmit = (data: z.infer<typeof userDetailsSchema>) => {
     setUserDetails(data as UserDetails);
-    toast({ title: "User Details Saved", description: "Your information has been updated." });
     if (onFormSubmit) onFormSubmit();
   };
 

