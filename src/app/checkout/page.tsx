@@ -34,11 +34,11 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="w-full">
       <h1 className="text-4xl font-headline text-primary mb-8 text-center">Checkout</h1>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         <div className="lg:col-span-2 space-y-8">
-          <Card className="shadow-lg">
+          <Card className="shadow-lg rounded-none sm:rounded-lg">
             <CardHeader>
               <CardTitle className="font-headline text-2xl text-primary">Shipping & Contact Information</CardTitle>
             </CardHeader>
@@ -47,7 +47,7 @@ export default function CheckoutPage() {
             </CardContent>
           </Card>
           
-          <Card className="shadow-lg">
+          <Card className="shadow-lg rounded-none sm:rounded-lg">
             <CardHeader>
               <CardTitle className="font-headline text-2xl text-primary">Payment Details</CardTitle>
             </CardHeader>

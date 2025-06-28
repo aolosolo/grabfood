@@ -6,6 +6,7 @@ import { OrderProvider } from '@/context/OrderContext';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import BottomBar from '@/components/cart/BottomBar';
+import MainLayout from '@/components/layout/MainLayout';
 
 export const metadata: Metadata = {
   title: 'FastGrab',
@@ -28,9 +29,9 @@ export default function RootLayout({
       <body className="font-body antialiased flex flex-col min-h-screen pb-24 md:pb-0" suppressHydrationWarning={true}>
         <OrderProvider>
           <Header />
-          <main className="flex-grow container mx-auto px-4 py-8">
+          <MainLayout>
             {children}
-          </main>
+          </MainLayout>
           <Footer />
           <BottomBar />
           <Toaster />
