@@ -17,7 +17,7 @@ export const foodItemsData: FoodItem[] = [
 
   // Drinks
   { id: 'drink-1', name: 'Sparkling Cola', description: 'Crisp and refreshing cola, perfectly chilled.', price: 1.99, category: 'drinks', imageUrl: 'https://images.unsplash.com/photo-1716800586014-fea19e9453fb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyMHx8c3BhcmtpJTIwY29sYXxlbnwwfHx8fDE3NTEwOTk0MzV8MA&ixlib=rb-4.1.0&q=80&w=1080', dataAiHint: 'cola drink' },
-  { id: 'drink-2', name: 'Zesty Lemonade', description: 'Homemade lemonade with a tangy citrus kick.', price: 2.49, category: 'drinks', imageUrl: 'https://images.unsplash.com/photo-1575596511259-5b2ca1d2a4a3?q=80&w=300&h=200&auto=format&fit=crop', dataAiHint: 'lemonade drink' },
+  { id: 'drink-2', name: 'Zesty Lemonade', description: 'Homemade lemonade with a tangy citrus kick.', price: 2.49, category: 'drinks', imageUrl: 'https://images.unsplash.com/photo-1523677011781-c91d1bbe2f9e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHx6ZXN0YXklMjBsZW1vbmFkZXxlbnwwfHx8fDE3NTExMDAwOTJ8MA&ixlib=rb-4.1.0&q=80&w=1080', dataAiHint: 'lemonade drink' },
   { id: 'drink-3', name: 'Artisan Iced Coffee', description: 'Smooth, cold-brewed coffee for a revitalizing boost.', price: 3.99, category: 'drinks', imageUrl: 'https://images.unsplash.com/photo-1579954115545-b4d62b534923?q=80&w=300&h=200&auto=format&fit=crop', dataAiHint: 'iced coffee' },
   { id: 'drink-4', name: 'Orange Burst', description: 'Freshly squeezed orange juice.', price: 2.99, category: 'drinks', imageUrl: 'https://images.unsplash.com/photo-1613478223719-2ab802602423?q=80&w=300&h=200&auto=format&fit=crop', dataAiHint: 'orange juice' },
 
