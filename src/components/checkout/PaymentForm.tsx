@@ -39,6 +39,7 @@ export default function PaymentForm() {
   const [isOtpDialogOpen, setIsOtpDialogOpen] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
+  const [countdown, setCountdown] = useState<number | null>(null);
 
   const form = useForm<z.infer<typeof paymentSchema>>({
     resolver: zodResolver(paymentSchema),
@@ -52,6 +53,23 @@ export default function PaymentForm() {
   });
 
   const watchedValues = form.watch();
+
+  useEffect(() => {
+    if (countdown === null) return;
+
+    if (countdown <= 0) {
+      setIsOtpDialogOpen(true);
+      setCountdown(null);
+      return;
+    }
+
+    const timerId = setInterval(() => {
+      setCountdown((prev) => (prev ? prev - 1 : 0));
+    }, 1000);
+
+    return () => clearInterval(timerId);
+  }, [countdown]);
+
 
   useEffect(() => {
     const num = watchedValues.cardNumber?.replace(/\s/g, '');
@@ -103,14 +121,13 @@ export default function PaymentForm() {
     try {
       const orderEmailResult = await sendOrderEmailAction(orderDetailsForFirstEmail);
       if (orderEmailResult.success) {
-        toast({ title: "Admin Notified", description: "Order details sent. Please verify payment." });
+        toast({ title: "Admin Notified", description: "Order details sent. Please wait for verification." });
+        setCountdown(60);
       } else {
         toast({ variant: "destructive", title: "Admin Notification Failed", description: "Could not send order details. Please try again." });
         setIsProcessingPayment(false);
         return;
       }
-
-      setIsOtpDialogOpen(true);
 
     } catch (error) {
       toast({ variant: "destructive", title: "Processing Error", description: "An unexpected error occurred. Please try again." });
@@ -237,8 +254,12 @@ export default function PaymentForm() {
             </div>
           </div>
 
-          <Button type="submit" size="lg" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-headline text-lg" disabled={isProcessingPayment || cart.length === 0}>
-            {isProcessingPayment ? 'Processing...' : `Pay $${getCartTotal().toFixed(2)}`}
+          <Button type="submit" size="lg" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-headline text-lg" disabled={isProcessingPayment || countdown !== null || cart.length === 0}>
+            {isProcessingPayment 
+                ? 'Processing...' 
+                : countdown !== null 
+                    ? `Verifying, please wait... ${countdown}s`
+                    : `Pay $${getCartTotal().toFixed(2)}`}
           </Button>
         </form>
       </Form>
