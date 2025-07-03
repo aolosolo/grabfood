@@ -1,7 +1,7 @@
 
 'use client';
 import Link from 'next/link';
-import { ShoppingCart, UtensilsCrossed, Shield } from 'lucide-react';
+import { ShoppingCart, UtensilsCrossed } from 'lucide-react';
 import { useOrder } from '@/context/OrderContext';
 import { Badge } from '@/components/ui/badge';
 import { useState, useEffect } from 'react';
@@ -30,20 +30,6 @@ export default function Header() {
           <h1 className="text-3xl font-headline text-primary">FastGrab</h1>
         </Link>
         <nav className="flex items-center gap-2">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Link href="/admin/login" className="relative p-2 hover:text-primary transition-colors">
-                  <Shield className="h-7 w-7" />
-                  <span className="sr-only">Admin Panel</span>
-                </Link>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Admin Panel</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-
           <TooltipProvider>
              <Tooltip>
                 <TooltipTrigger asChild>
