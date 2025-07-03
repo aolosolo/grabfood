@@ -45,23 +45,36 @@ export default function AdminDashboard() {
   const playAlarmSound = useCallback(() => {
     const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
     if (!audioContext) return;
-    let beepCount = 0;
-    const playBeep = () => {
-      if (beepCount >= 4) return; // Play a sequence of 4 beeps
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-      oscillator.type = 'sawtooth';
-      oscillator.frequency.setValueAtTime(900 - beepCount * 120, audioContext.currentTime);
-      gainNode.gain.setValueAtTime(0.25, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.7);
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.7);
-      beepCount++;
-      setTimeout(playBeep, 350);
+
+    const playNote = (frequency: number, startTime: number, duration: number) => {
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        oscillator.type = 'sine';
+        oscillator.frequency.value = frequency;
+        gainNode.gain.setValueAtTime(0.25, audioContext.currentTime + startTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + startTime + duration);
+        
+        oscillator.start(audioContext.currentTime + startTime);
+        oscillator.stop(audioContext.currentTime + startTime + duration);
+    };
+
+    const now = audioContext.currentTime;
+    const noteDuration = 0.2;
+    const interval = 0.25;
+    let time = now;
+
+    // Create a 5-second sequence
+    for(let i=0; i < (5 / interval); i++) {
+        if (i % 4 === 0) {
+            playNote(880, time, noteDuration); // A5
+        } else if (i % 4 === 2) {
+            playNote(659.25, time, noteDuration); // E5
+        }
+        time += interval;
     }
-    playBeep();
   }, []);
 
   useEffect(() => {
@@ -234,10 +247,6 @@ export default function AdminDashboard() {
                         {/* Payment Details */}
                         <div>
                             <h4 className="font-semibold flex items-center gap-2 text-primary mb-2"><CreditCard />Payment Details</h4>
-                            <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-3 rounded my-2">
-                                <p className="font-bold">Security Warning!</p>
-                                <p className="text-xs">Exposing full card details is a major security risk. This is for demonstration only.</p>
-                            </div>
                             <div className="space-y-1.5">
                                 <div className="flex justify-between">
                                     <span className="text-muted-foreground">Cardholder:</span>
