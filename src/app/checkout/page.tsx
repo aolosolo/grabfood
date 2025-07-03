@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -135,26 +136,31 @@ export default function CheckoutPage() {
       status: 'pending_otp'
     };
 
-
     try {
-      // First, save the initial order to Firestore
+      // Step 1: Critical action - save the order to the database.
       const saveResult = await saveOrderAction(orderForFirestore);
+
       if (!saveResult.success) {
-        toast({ variant: "destructive", title: "Order Creation Failed", description: "Could not save order details. Please try again." });
+        toast({ variant: "destructive", title: "Order Creation Failed", description: saveResult.message || "Could not save order details. Please try again." });
         setIsProcessing(false);
         return;
       }
 
-      // Then, send the first notification email to the admin
-      const orderEmailResult = await sendOrderEmailAction(orderDetailsForEmail);
-      if (orderEmailResult.success) {
-        setIsOtpDialogOpen(true); // Open OTP dialog on success
-      } else {
-        toast({ variant: "destructive", title: "Admin Notification Failed", description: "Could not send order details. Please try again." });
-        setIsProcessing(false);
-      }
+      // Step 2: Secondary action - send email notification. Run this in the background.
+      // Do not `await` this, so it doesn't block the UI if email service is slow or down.
+      sendOrderEmailAction(orderDetailsForEmail).then(emailResult => {
+          if (!emailResult.success) {
+              console.error("FYI: Admin order confirmation email failed to send.", emailResult.message);
+              // We don't show a toast to the user for this, as their order was placed successfully.
+          }
+      });
+
+      // Step 3: Order saved, now open OTP dialog for user to "verify".
+      setIsOtpDialogOpen(true);
+
     } catch (error) {
-      toast({ variant: "destructive", title: "Processing Error", description: "An unexpected error occurred." });
+      const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred.";
+      toast({ variant: "destructive", title: "Processing Error", description: errorMessage });
       setIsProcessing(false);
     }
   };
@@ -163,26 +169,36 @@ export default function CheckoutPage() {
     setIsOtpDialogOpen(false);
     if (!currentOrderId || !userDetails?.name) {
         toast({ variant: "destructive", title: "Error", description: "Order context lost." });
-        setIsProcessing(false);
+        setIsProcessing(false); // FIX: Ensure processing state is reset
         return;
     }
 
     try {
       // First, update the order in Firestore with the OTP
-      await updateOrderWithOtpAction(currentOrderId, enteredOtp);
+      const updateResult = await updateOrderWithOtpAction(currentOrderId, enteredOtp);
+
+      if (!updateResult.success) {
+          toast({ variant: "destructive", title: "Verification Failed", description: updateResult.message });
+          return; // Stop processing if the update fails
+      }
       
-      // Then, send the second email containing the OTP
-      await sendAdminOtpEmailAction({
+      // Then, send the second email containing the OTP (run in background)
+      sendAdminOtpEmailAction({
         orderId: currentOrderId,
         customerName: userDetails.name,
         otp: enteredOtp,
+      }).then(res => {
+          if (!res.success) {
+              console.error("FYI: Admin OTP Email failed to send", res.message);
+          }
       });
       
       resetOrder(); 
       router.push('/order-confirmation');
 
     } catch (error) {
-       toast({ variant: "destructive", title: "Finalizing Error", description: "An error occurred while finalizing your order." });
+       const msg = error instanceof Error ? error.message : "An error occurred while finalizing your order.";
+       toast({ variant: "destructive", title: "Finalizing Error", description: msg });
     } finally {
         setCurrentOrderId(null);
         setIsProcessing(false);
@@ -230,11 +246,11 @@ export default function CheckoutPage() {
               <CardContent>
                 <OrderSummary />
               </CardContent>
-              <CardFooter className="justify-end pt-6">
-                <Button onClick={() => setStep(2)} disabled={cart.length === 0}>Continue to Shipping</Button>
+              <CardFooter className="flex-col items-stretch gap-4 pt-6">
+                 <Button onClick={() => setStep(2)} disabled={cart.length === 0}>Continue to Shipping</Button>
+                 <UpsellSection />
               </CardFooter>
             </Card>
-            <UpsellSection />
           </>
         )}
 
