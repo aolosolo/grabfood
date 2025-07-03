@@ -203,15 +203,24 @@ export default function AdminDashboard() {
                             <CardDescription>Received at: {formatTimestamp(order.createdAt)}</CardDescription>
                         </div>
                         <div className="flex items-center gap-4">
+                            <div className="font-bold text-xl text-primary" title="Total Amount">
+                                ${order.totalAmount.toFixed(2)}
+                            </div>
+                            
                             {order.otp && (
+                                <>
+                                <Separator orientation="vertical" className="h-6" />
                                 <div className="flex items-center gap-2 text-green-600" title="Verification OTP">
-                                <ShieldCheck className="h-5 w-5" />
-                                <span className="text-lg font-bold tracking-widest">{order.otp}</span>
+                                    <ShieldCheck className="h-5 w-5" />
+                                    <span className="text-lg font-bold tracking-widest">{order.otp}</span>
                                 </div>
+                                </>
                             )}
+
                             <Badge variant={order.status === 'completed' ? 'default' : 'destructive'} className={order.status === 'completed' ? 'bg-green-600' : 'bg-yellow-600'}>
                                 {order.status === 'completed' ? 'Completed' : 'Pending OTP'}
                             </Badge>
+                            
                             <Button variant="ghost" size="icon" onClick={() => handlePinToggle(order.orderId)} title={isPinned ? 'Unpin Order' : 'Pin Order'}>
                                 {isPinned ? <PinOff className="h-5 w-5 text-blue-600" /> : <Pin className="h-5 w-5 text-muted-foreground hover:text-primary" />}
                             </Button>
@@ -286,11 +295,6 @@ export default function AdminDashboard() {
                             </li>
                             ))}
                         </ul>
-                        <Separator className="my-3"/>
-                        <div className="flex justify-between font-bold text-base">
-                            <span>Total Amount:</span>
-                            <span>${order.totalAmount.toFixed(2)}</span>
-                        </div>
                     </div>
                   </CardContent>
                 </Card>
