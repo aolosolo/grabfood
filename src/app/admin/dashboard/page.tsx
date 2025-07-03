@@ -170,16 +170,19 @@ export default function AdminDashboard() {
     <div className="flex items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground border rounded-lg p-2 bg-card shadow-sm">
         <div className="flex items-center gap-1 sm:gap-2" title="Total Orders">
             <Package className="h-4 w-4" />
+            <span>Orders:</span>
             <span className="font-bold text-foreground">{orderStats.total}</span>
         </div>
         <Separator orientation="vertical" className="h-6" />
         <div className="flex items-center gap-1 sm:gap-2 text-yellow-600" title="Pending Orders">
             <Timer className="h-4 w-4" />
+            <span>Pending:</span>
             <span className="font-bold text-foreground">{orderStats.pending}</span>
         </div>
         <Separator orientation="vertical" className="h-6" />
         <div className="flex items-center gap-1 sm:gap-2 text-green-600" title="Completed Orders">
             <CheckCircle2 className="h-4 w-4" />
+            <span>Completed:</span>
             <span className="font-bold text-foreground">{orderStats.completed}</span>
         </div>
     </div>
