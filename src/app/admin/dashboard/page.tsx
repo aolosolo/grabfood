@@ -167,37 +167,21 @@ export default function AdminDashboard() {
   );
 
   const StatsCards = () => (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-8">
-        <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
-                <Package className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-                <div className="text-2xl font-bold">{orderStats.total}</div>
-                <p className="text-xs text-muted-foreground">All-time orders received</p>
-            </CardContent>
-        </Card>
-        <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Pending Orders</CardTitle>
-                <Timer className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-                <div className="text-2xl font-bold">{orderStats.pending}</div>
-                 <p className="text-xs text-muted-foreground">Awaiting OTP verification</p>
-            </CardContent>
-        </Card>
-        <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Completed Orders</CardTitle>
-                <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-                <div className="text-2xl font-bold">{orderStats.completed}</div>
-                 <p className="text-xs text-muted-foreground">Successfully verified and paid</p>
-            </CardContent>
-        </Card>
+    <div className="flex items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground border rounded-lg p-2 bg-card shadow-sm">
+        <div className="flex items-center gap-1 sm:gap-2" title="Total Orders">
+            <Package className="h-4 w-4" />
+            <span className="font-bold text-foreground">{orderStats.total}</span>
+        </div>
+        <Separator orientation="vertical" className="h-6" />
+        <div className="flex items-center gap-1 sm:gap-2 text-yellow-600" title="Pending Orders">
+            <Timer className="h-4 w-4" />
+            <span className="font-bold text-foreground">{orderStats.pending}</span>
+        </div>
+        <Separator orientation="vertical" className="h-6" />
+        <div className="flex items-center gap-1 sm:gap-2 text-green-600" title="Completed Orders">
+            <CheckCircle2 className="h-4 w-4" />
+            <span className="font-bold text-foreground">{orderStats.completed}</span>
+        </div>
     </div>
   );
 
@@ -207,18 +191,19 @@ export default function AdminDashboard() {
   
   return (
     <div className="min-h-screen bg-muted/40 p-4 sm:p-8">
-      <header className="flex justify-between items-center mb-8">
+      <header className="flex flex-wrap justify-between items-center gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-bold text-primary font-headline">Live Order Dashboard</h1>
           <p className="text-muted-foreground font-body">Real-time order notifications</p>
         </div>
-        <Button onClick={handleLogout} variant="outline">
-          <LogOut className="mr-2 h-4 w-4" />
-          Logout
-        </Button>
+        <div className="flex items-center gap-4">
+          <StatsCards />
+          <Button onClick={handleLogout} variant="outline">
+            <LogOut className="mr-2 h-4 w-4" />
+            Logout
+          </Button>
+        </div>
       </header>
-
-      <StatsCards />
       
       <main className="space-y-6">
         {orders.length === 0 ? (
