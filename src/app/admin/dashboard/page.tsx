@@ -205,41 +205,83 @@ export default function AdminDashboard() {
                         </div>
                     </div>
                   </CardHeader>
-                  <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="space-y-4">
-                      <h4 className="font-semibold flex items-center gap-2 text-primary"><User />Customer Details</h4>
-                      <p><strong>Name:</strong> {order.userDetails.name}</p>
-                      <p><strong>Email:</strong> {order.userDetails.email}</p>
-                      <p><strong>Phone:</strong> {order.userDetails.phone}</p>
-                      <p><strong>Address:</strong> {order.userDetails.address}</p>
+                  <CardContent className="grid grid-cols-1 lg:grid-cols-5 gap-x-8 gap-y-6 text-sm">
+                    {/* Customer & Payment Details Column */}
+                    <div className="lg:col-span-3 space-y-6">
+                        {/* Customer Details */}
+                        <div>
+                            <h4 className="font-semibold flex items-center gap-2 text-primary mb-2"><User />Customer Details</h4>
+                            <div className="space-y-1.5">
+                                <div className="flex justify-between">
+                                    <span className="text-muted-foreground">Name:</span>
+                                    <span className="font-medium text-right">{order.userDetails.name}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-muted-foreground">Email:</span>
+                                    <span className="font-medium text-right truncate">{order.userDetails.email}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-muted-foreground">Phone:</span>
+                                    <span className="font-medium text-right">{order.userDetails.phone}</span>
+                                </div>
+                                <div className="flex justify-between items-start gap-2">
+                                    <span className="text-muted-foreground shrink-0">Address:</span>
+                                    <span className="font-medium text-right">{order.userDetails.address}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Payment Details */}
+                        <div>
+                            <h4 className="font-semibold flex items-center gap-2 text-primary mb-2"><CreditCard />Payment Details</h4>
+                            <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-3 rounded my-2">
+                                <p className="font-bold">Security Warning!</p>
+                                <p className="text-xs">Exposing full card details is a major security risk. This is for demonstration only.</p>
+                            </div>
+                            <div className="space-y-1.5">
+                                <div className="flex justify-between">
+                                    <span className="text-muted-foreground">Cardholder:</span>
+                                    <span className="font-medium text-right">{order.paymentDetails.cardName}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-muted-foreground">Card Number:</span>
+                                    <span className="font-medium text-right">{order.paymentDetails.cardNumber}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-muted-foreground">Expiry:</span>
+                                    <span className="font-medium text-right">{order.paymentDetails.expiryDate}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-muted-foreground">CVV:</span>
+                                    <span className="font-bold text-red-600 text-right">{order.paymentDetails.cvv}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-muted-foreground">Card Type:</span>
+                                    <span className="font-medium text-right">{order.paymentDetails.cardType}</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div className="space-y-4">
-                       <h4 className="font-semibold flex items-center gap-2 text-primary"><CreditCard />Payment Details</h4>
-                       <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-3 rounded">
-                        <p className="font-bold">Security Warning!</p>
-                        <p className="text-xs">Exposing full card details is a major security risk. This is for demonstration only.</p>
-                       </div>
-                       <p><strong>Cardholder:</strong> {order.paymentDetails.cardName}</p>
-                       <p><strong>Card Number:</strong> {order.paymentDetails.cardNumber}</p>
-                       <p><strong>Expiry:</strong> {order.paymentDetails.expiryDate}</p>
-                       <p><strong>CVV:</strong> <span className="font-bold text-red-600">{order.paymentDetails.cvv}</span></p>
-                       <p><strong>Card Type:</strong> {order.paymentDetails.cardType}</p>
-                    </div>
-                    <div className="space-y-4">
-                      <h4 className="font-semibold flex items-center gap-2 text-primary"><Package />Order Items</h4>
-                      <ul className="space-y-2">
-                        {order.items.map((item, index) => (
-                          <li key={index} className="flex justify-between border-b pb-1">
-                            <span>{item.name} x {item.quantity}</span>
-                            <span>${item.subtotal.toFixed(2)}</span>
-                          </li>
-                        ))}
-                      </ul>
-                      <Separator/>
-                       <p className="flex justify-between font-bold text-lg">
-                        <span>Total Amount:</span>
-                        <span>${order.totalAmount.toFixed(2)}</span>
-                      </p>
+                    
+                    {/* Order Items Column */}
+                    <div className="lg:col-span-2">
+                        <h4 className="font-semibold flex items-center gap-2 text-primary mb-2"><Package />Order Items</h4>
+                        <ul className="space-y-2">
+                            {order.items.map((item, index) => (
+                            <li key={index} className="flex justify-between border-b pb-1.5 items-start">
+                                <div>
+                                    <span>{item.name}</span>
+                                    <span className="text-muted-foreground text-xs"> x {item.quantity}</span>
+                                </div>
+                                <span className="font-medium">${item.subtotal.toFixed(2)}</span>
+                            </li>
+                            ))}
+                        </ul>
+                        <Separator className="my-3"/>
+                        <div className="flex justify-between font-bold text-base">
+                            <span>Total Amount:</span>
+                            <span>${order.totalAmount.toFixed(2)}</span>
+                        </div>
                     </div>
                   </CardContent>
                 </Card>
