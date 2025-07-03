@@ -3,7 +3,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { CheckCircle2, Moped, Pizza, Package } from "lucide-react";
+import { CheckCircle2, Bike, Pizza, Package } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useOrder } from "@/context/OrderContext";
@@ -76,7 +76,7 @@ export default function OrderConfirmationPage() {
             {/* Delivery Animation */}
             <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-48 h-24 animate-delivery-ride">
                 <div className="relative w-full h-full">
-                    <Moped className="absolute bottom-2 left-1/2 -translate-x-1/2 w-20 h-20 text-foreground" />
+                    <Bike className="absolute bottom-2 left-1/2 -translate-x-1/2 w-20 h-20 text-foreground" />
                     <Pizza className="absolute bottom-10 left-[calc(50%-2px)] -translate-x-1/2 w-8 h-8 text-yellow-500 -rotate-12" />
                 </div>
             </div>
