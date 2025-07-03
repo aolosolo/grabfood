@@ -1,5 +1,7 @@
 
 import type { LucideIcon } from 'lucide-react';
+import type { Timestamp } from 'firebase/firestore';
+
 
 export interface FoodItem {
   id: string;
@@ -64,4 +66,12 @@ export interface OrderDetailsForEmail {
   totalAmount: number;
   orderId: string;
   paymentDetails: PaymentDetails;
+}
+
+// Represents the full order structure for Firestore
+export interface Order extends Omit<OrderDetailsForEmail, 'customerName' | 'customerEmail' | 'customerAddress' | 'customerPhone'> {
+  userDetails: UserDetails;
+  otp?: string; // OTP is added in a separate step
+  status: 'pending_otp' | 'completed';
+  createdAt: Date | Timestamp;
 }

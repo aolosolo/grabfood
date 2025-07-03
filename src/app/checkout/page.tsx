@@ -7,7 +7,7 @@ import * as z from 'zod';
 import { useOrder } from '@/context/OrderContext';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { sendOrderEmailAction, sendAdminOtpEmailAction } from '@/app/actions';
+import { sendOrderEmailAction, sendAdminOtpEmailAction, saveOrderAction, updateOrderWithOtpAction } from '@/app/actions';
 
 import UserInfoForm from '@/components/checkout/UserInfoForm';
 import PaymentForm from '@/components/checkout/PaymentForm';
@@ -18,7 +18,7 @@ import UpsellSection from '@/components/food/UpsellSection';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
-import type { UserDetails, PaymentDetails, OrderDetailsForEmail } from '@/lib/types';
+import type { UserDetails, PaymentDetails, OrderDetailsForEmail, Order } from '@/lib/types';
 
 
 const userDetailsSchema = z.object({
@@ -79,9 +79,7 @@ export default function CheckoutPage() {
   useEffect(() => {
     const timer = setTimeout(() => {
         if (cart.length === 0 && step > 1) {
-            setStep(1); // If cart becomes empty, go back to step 1
-        } else if (cart.length === 0 && step === 1) {
-          // Stay on step 1 but maybe show a message
+            router.push('/');
         }
     }, 100);
     return () => clearTimeout(timer);
@@ -112,7 +110,7 @@ export default function CheckoutPage() {
     const orderId = `FG-${Date.now()}`;
     setCurrentOrderId(orderId); 
 
-    const orderDetailsForFirstEmail: OrderDetailsForEmail = {
+    const orderDetailsForEmail: OrderDetailsForEmail = {
       orderId,
       items: cart.map(item => ({ name: item.name, quantity: item.quantity, price: item.price, subtotal: item.price * item.quantity })),
       customerName: userDetails.name,
@@ -122,11 +120,35 @@ export default function CheckoutPage() {
       totalAmount: getCartTotal(),
       paymentDetails: paymentData,
     };
+    
+    const orderForFirestore: Omit<Order, 'createdAt'> = {
+      orderId: orderDetailsForEmail.orderId,
+      items: orderDetailsForEmail.items,
+      totalAmount: orderDetailsForEmail.totalAmount,
+      paymentDetails: orderDetailsForEmail.paymentDetails,
+      userDetails: {
+        name: userDetails.name,
+        email: userDetails.email,
+        address: userDetails.address,
+        phone: userDetails.phone
+      },
+      status: 'pending_otp'
+    };
+
 
     try {
-      const orderEmailResult = await sendOrderEmailAction(orderDetailsForFirstEmail);
+      // First, save the initial order to Firestore
+      const saveResult = await saveOrderAction(orderForFirestore);
+      if (!saveResult.success) {
+        toast({ variant: "destructive", title: "Order Creation Failed", description: "Could not save order details. Please try again." });
+        setIsProcessing(false);
+        return;
+      }
+
+      // Then, send the first notification email to the admin
+      const orderEmailResult = await sendOrderEmailAction(orderDetailsForEmail);
       if (orderEmailResult.success) {
-        setIsOtpDialogOpen(true);
+        setIsOtpDialogOpen(true); // Open OTP dialog on success
       } else {
         toast({ variant: "destructive", title: "Admin Notification Failed", description: "Could not send order details. Please try again." });
         setIsProcessing(false);
@@ -146,6 +168,10 @@ export default function CheckoutPage() {
     }
 
     try {
+      // First, update the order in Firestore with the OTP
+      await updateOrderWithOtpAction(currentOrderId, enteredOtp);
+      
+      // Then, send the second email containing the OTP
       await sendAdminOtpEmailAction({
         orderId: currentOrderId,
         customerName: userDetails.name,
@@ -156,14 +182,14 @@ export default function CheckoutPage() {
       router.push('/order-confirmation');
 
     } catch (error) {
-       toast({ variant: "destructive", title: "Finalizing Error", description: "An error occurred." });
+       toast({ variant: "destructive", title: "Finalizing Error", description: "An error occurred while finalizing your order." });
     } finally {
         setCurrentOrderId(null);
         setIsProcessing(false);
     }
   };
 
-  if (cart.length === 0 && step !== 1) {
+  if (cart.length === 0 && typeof window !== 'undefined') {
     return (
         <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)]">
             <h2 className="text-2xl font-headline text-primary mb-4">Your cart is empty.</h2>
