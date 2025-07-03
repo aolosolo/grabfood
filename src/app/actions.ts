@@ -6,7 +6,7 @@ import type { OrderDetailsForEmail, Order } from '@/lib/types';
 import { sendAdminOtpEmail as sendAiAdminOtpEmail, type AdminOtpEmailInput, type AdminOtpEmailOutput } from '@/ai/flows/admin-otp-notification-flow';
 
 import { db } from '@/lib/firebase';
-import { collection, doc, setDoc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { doc, setDoc, updateDoc, serverTimestamp, deleteDoc } from "firebase/firestore";
 
 export async function getUpsellRecommendations(input: UpsellRecommendationsInput): Promise<UpsellRecommendationsOutput> {
   try {
@@ -89,5 +89,20 @@ export async function updateOrderWithOtpAction(orderId: string, otp: string): Pr
     console.error("Error updating order with OTP:", error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return { success: false, message: `Failed to update order: ${errorMessage}` };
+  }
+}
+
+/**
+ * Deletes an order from Firestore.
+ */
+export async function deleteOrderAction(orderId: string): Promise<{ success: boolean; message: string }> {
+  try {
+    const orderRef = doc(db, "orders", orderId);
+    await deleteDoc(orderRef);
+    return { success: true, message: 'Order deleted successfully.' };
+  } catch (error) {
+    console.error("Error deleting order from Firestore:", error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    return { success: false, message: `Failed to delete order: ${errorMessage}` };
   }
 }
