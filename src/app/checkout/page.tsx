@@ -56,6 +56,12 @@ export default function CheckoutPage() {
   const [isOtpDialogOpen, setIsOtpDialogOpen] = useState(false);
   const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
 
+  // Client-side mount state to prevent hydration errors
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   const userInfoForm = useForm<z.infer<typeof userDetailsSchema>>({
     resolver: zodResolver(userDetailsSchema),
     defaultValues: userDetails || { name: '', address: '', phone: '', email: '' },
@@ -79,12 +85,12 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-        if (cart.length === 0 && step > 1) {
+        if (cart.length === 0 && step > 1 && isClient) {
             router.push('/');
         }
     }, 100);
     return () => clearTimeout(timer);
-  }, [cart, step, router]);
+  }, [cart, step, router, isClient]);
 
   const onUserInfoSubmit = (data: UserDetails) => {
     setUserDetails(data);
@@ -205,7 +211,7 @@ export default function CheckoutPage() {
     }
   };
 
-  if (cart.length === 0 && typeof window !== 'undefined') {
+  if (isClient && cart.length === 0) {
     return (
         <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)]">
             <h2 className="text-2xl font-headline text-primary mb-4">Your cart is empty.</h2>
