@@ -1,0 +1,11 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // WARNING: These rules are insecure and for demonstration purposes only.
+    // They allow anyone to read, create, and update orders.
+    // In a production app, you must secure your data properly.
+    match /orders/{orderId} {
+      allow read, create, update: if true;
+    }
+  }
+}
