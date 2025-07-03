@@ -49,6 +49,8 @@ export interface OrderContextType {
   paymentDetails: PaymentDetails | null;
   setPaymentDetails: (details: PaymentDetails) => void;
   resetOrder: () => void;
+  lastOrder: OrderDetailsForEmail | null;
+  setLastOrder: (order: OrderDetailsForEmail) => void;
 }
 
 export interface FoodCategory {

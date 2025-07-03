@@ -3,39 +3,34 @@
 
 import type { ReactNode } from 'react';
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import type { OrderContextType, CartItem, FoodItem, UserDetails, PaymentDetails } from '@/lib/types';
+import type { OrderContextType, CartItem, FoodItem, UserDetails, PaymentDetails, OrderDetailsForEmail } from '@/lib/types';
 
 const OrderContext = createContext<OrderContextType | undefined>(undefined);
 
 export const OrderProvider = ({ children }: { children: ReactNode }) => {
-  const [cart, setCart] = useState<CartItem[]>([]); // Initialize with empty array
-  const [userDetails, setUserDetailsState] = useState<UserDetails | null>(null); // Initialize with null
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [userDetails, setUserDetailsState] = useState<UserDetails | null>(null);
   const [paymentDetails, setPaymentDetailsState] = useState<PaymentDetails | null>(null);
+  const [lastOrder, setLastOrder] = useState<OrderDetailsForEmail | null>(null);
 
   useEffect(() => {
-    // This effect runs only on the client after the component mounts
     const savedCart = localStorage.getItem('fastGrabCart');
-    if (savedCart) {
-      setCart(JSON.parse(savedCart));
-    }
+    if (savedCart) setCart(JSON.parse(savedCart));
 
     const savedUserDetails = localStorage.getItem('fastGrabUserDetails');
-    if (savedUserDetails) {
-      setUserDetailsState(JSON.parse(savedUserDetails));
-    }
-  }, []); // Empty dependency array ensures this runs once on mount
+    if (savedUserDetails) setUserDetailsState(JSON.parse(savedUserDetails));
+    
+    const savedLastOrder = localStorage.getItem('fastGrabLastOrder');
+    if (savedLastOrder) setLastOrder(JSON.parse(savedLastOrder));
+  }, []);
 
   useEffect(() => {
-    // Persist cart to localStorage whenever it changes, but only after initial client-side load
-    // The check for `typeof window` is less critical here if the first load is handled,
-    // but doesn't hurt.
     if (typeof window !== 'undefined') {
         localStorage.setItem('fastGrabCart', JSON.stringify(cart));
     }
   }, [cart]);
 
   useEffect(() => {
-    // Persist userDetails to localStorage whenever it changes
     if (typeof window !== 'undefined') {
         if (userDetails) {
         localStorage.setItem('fastGrabUserDetails', JSON.stringify(userDetails));
@@ -44,8 +39,22 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
         }
     }
   }, [userDetails]);
+  
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      if (lastOrder) {
+        localStorage.setItem('fastGrabLastOrder', JSON.stringify(lastOrder));
+      } else {
+        localStorage.removeItem('fastGrabLastOrder');
+      }
+    }
+  }, [lastOrder]);
 
   const addToCart = (item: FoodItem, quantity: number = 1, uniqueIdSuffix?: string) => {
+    if (lastOrder) {
+      setLastOrder(null);
+    }
+    
     setCart(prevCart => {
       const baseUniqueId = item.customizations?.selectedFlavor ? `${item.id}-${item.customizations.selectedFlavor}` : item.id;
       const uniqueId = uniqueIdSuffix ? `${baseUniqueId}-${uniqueIdSuffix}` : baseUniqueId;
@@ -96,12 +105,7 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
 
   const resetOrder = () => {
     clearCart();
-    setUserDetailsState(null);
     setPaymentDetailsState(null);
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('fastGrabUserDetails');
-      // Note: cart will be cleared via clearCart() which updates localStorage through its own effect.
-    }
   };
 
   return (
@@ -118,6 +122,8 @@ export const OrderProvider = ({ children }: { children: ReactNode }) => {
         paymentDetails,
         setPaymentDetails,
         resetOrder,
+        lastOrder,
+        setLastOrder,
       }}
     >
       {children}

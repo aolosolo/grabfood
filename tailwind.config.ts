@@ -1,3 +1,4 @@
+
 import type {Config} from 'tailwindcss';
 
 export default {
@@ -104,12 +105,19 @@ export default {
           '0%': { transform: 'rotateY(180deg)' },
           '100%': { transform: 'rotateY(0deg)' },
         },
+        'delivery-ride': {
+          '0%': { transform: 'translateX(-150%)' },
+          '20%': { transform: 'translateX(0)' },
+          '80%': { transform: 'translateX(0)' },
+          '100%': { transform: 'translateX(150%)' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
         'card-flip-y': 'card-flip-y 0.6s ease-in-out',
         'card-unflip-y': 'card-unflip-y 0.6s ease-in-out',
+        'delivery-ride': 'delivery-ride 4s ease-in-out forwards 1s',
       },
     },
   },

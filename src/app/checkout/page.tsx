@@ -46,7 +46,7 @@ const paymentSchema = z.object({
 
 
 export default function CheckoutPage() {
-  const { cart, userDetails, setUserDetails, getCartTotal, resetOrder, setPaymentDetails } = useOrder();
+  const { cart, userDetails, setUserDetails, getCartTotal, resetOrder, setPaymentDetails, setLastOrder } = useOrder();
   const router = useRouter();
   const { toast } = useToast();
   const [step, setStep] = useState(1);
@@ -55,6 +55,7 @@ export default function CheckoutPage() {
   // OTP state
   const [isOtpDialogOpen, setIsOtpDialogOpen] = useState(false);
   const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
+  const [orderDetailsForConfirmation, setOrderDetailsForConfirmation] = useState<OrderDetailsForEmail | null>(null);
 
   // Client-side mount state to prevent hydration errors
   const [isClient, setIsClient] = useState(false);
@@ -85,8 +86,9 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-        if (cart.length === 0 && step > 1 && isClient) {
-            router.push('/');
+        if (cart.length === 0 && isClient) {
+            // Only redirect if cart is empty and we are not on the first step.
+            if (step > 1) router.push('/');
         }
     }, 100);
     return () => clearTimeout(timer);
@@ -128,6 +130,8 @@ export default function CheckoutPage() {
       paymentDetails: paymentData,
     };
     
+    setOrderDetailsForConfirmation(orderDetailsForEmail);
+
     const orderForFirestore: Omit<Order, 'createdAt'> = {
       orderId: orderDetailsForEmail.orderId,
       items: orderDetailsForEmail.items,
@@ -153,11 +157,9 @@ export default function CheckoutPage() {
       }
 
       // Step 2: Secondary action - send email notification. Run this in the background.
-      // Do not `await` this, so it doesn't block the UI if email service is slow or down.
       sendOrderEmailAction(orderDetailsForEmail).then(emailResult => {
           if (!emailResult.success) {
               console.error("FYI: Admin order confirmation email failed to send.", emailResult.message);
-              // We don't show a toast to the user for this, as their order was placed successfully.
           }
       });
 
@@ -175,7 +177,7 @@ export default function CheckoutPage() {
     setIsOtpDialogOpen(false);
     if (!currentOrderId || !userDetails?.name) {
         toast({ variant: "destructive", title: "Error", description: "Order context lost." });
-        setIsProcessing(false); // FIX: Ensure processing state is reset
+        setIsProcessing(false); 
         return;
     }
 
@@ -185,7 +187,7 @@ export default function CheckoutPage() {
 
       if (!updateResult.success) {
           toast({ variant: "destructive", title: "Verification Failed", description: updateResult.message });
-          return; // Stop processing if the update fails
+          return;
       }
       
       // Then, send the second email containing the OTP (run in background)
@@ -199,6 +201,10 @@ export default function CheckoutPage() {
           }
       });
       
+      if (orderDetailsForConfirmation) {
+        setLastOrder(orderDetailsForConfirmation);
+      }
+      
       resetOrder(); 
       router.push('/order-confirmation');
 
@@ -208,6 +214,7 @@ export default function CheckoutPage() {
     } finally {
         setCurrentOrderId(null);
         setIsProcessing(false);
+        setOrderDetailsForConfirmation(null);
     }
   };
 
@@ -299,6 +306,7 @@ export default function CheckoutPage() {
               setIsOtpDialogOpen(false);
               setCurrentOrderId(null);
               setIsProcessing(false);
+              setOrderDetailsForConfirmation(null);
           }}
           onSubmitOtp={handleOtpSubmit}
           totalAmount={getCartTotal()}
