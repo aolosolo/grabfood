@@ -18,7 +18,20 @@ export async function getUpsellRecommendations(input: UpsellRecommendationsInput
   }
 }
 
+/**
+ * Checks if the necessary SMTP environment variables are configured.
+ */
+function areEmailCredentialsConfigured(): boolean {
+  return !!(process.env.SMTP_HOST && process.env.SMTP_PORT && process.env.SMTP_USER && process.env.SMTP_PASS);
+}
+
 export async function sendOrderEmailAction(orderDetails: OrderDetailsForEmail): Promise<{ success: boolean; message: string }> {
+  if (!areEmailCredentialsConfigured()) {
+    console.log("SMTP not configured. Skipping order confirmation email.");
+    // Return success to avoid blocking the user flow, but indicate it was skipped.
+    return { success: true, message: 'Email service not configured.' };
+  }
+  
   try {
     const result = await sendAiOrderConfirmationEmail(orderDetails);
     return result;
@@ -29,6 +42,11 @@ export async function sendOrderEmailAction(orderDetails: OrderDetailsForEmail): 
 }
 
 export async function sendAdminOtpEmailAction(input: AdminOtpEmailInput): Promise<AdminOtpEmailOutput> {
+  if (!areEmailCredentialsConfigured()) {
+    console.log("SMTP not configured. Skipping admin OTP email.");
+    return { success: true, message: 'Email service not configured.' };
+  }
+
   try {
     const result = await sendAiAdminOtpEmail(input);
     return result;
