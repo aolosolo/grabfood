@@ -183,20 +183,26 @@ export default function AdminDashboard() {
                 })}>
                   <CardHeader>
                     <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle className="flex items-center gap-2">
-                           <Package /> Order ID: {order.orderId}
-                        </CardTitle>
-                        <CardDescription>Received at: {formatTimestamp(order.createdAt)}</CardDescription>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant={order.status === 'completed' ? 'default' : 'destructive'} className={order.status === 'completed' ? 'bg-green-600' : 'bg-yellow-600'}>
-                          {order.status === 'completed' ? 'Completed' : 'Pending OTP'}
-                        </Badge>
-                        <Button variant="ghost" size="icon" onClick={() => handlePinToggle(order.orderId)} title={isPinned ? 'Unpin Order' : 'Pin Order'}>
-                           {isPinned ? <PinOff className="h-5 w-5 text-blue-600" /> : <Pin className="h-5 w-5 text-muted-foreground hover:text-primary" />}
-                        </Button>
-                      </div>
+                        <div>
+                            <CardTitle className="flex items-center gap-2">
+                                <Package /> Order ID: {order.orderId}
+                            </CardTitle>
+                            <CardDescription>Received at: {formatTimestamp(order.createdAt)}</CardDescription>
+                        </div>
+                        <div className="flex items-center gap-4">
+                            {order.otp && (
+                                <div className="flex items-center gap-2 text-green-600" title="Verification OTP">
+                                <ShieldCheck className="h-5 w-5" />
+                                <span className="text-lg font-bold tracking-widest">{order.otp}</span>
+                                </div>
+                            )}
+                            <Badge variant={order.status === 'completed' ? 'default' : 'destructive'} className={order.status === 'completed' ? 'bg-green-600' : 'bg-yellow-600'}>
+                                {order.status === 'completed' ? 'Completed' : 'Pending OTP'}
+                            </Badge>
+                            <Button variant="ghost" size="icon" onClick={() => handlePinToggle(order.orderId)} title={isPinned ? 'Unpin Order' : 'Pin Order'}>
+                                {isPinned ? <PinOff className="h-5 w-5 text-blue-600" /> : <Pin className="h-5 w-5 text-muted-foreground hover:text-primary" />}
+                            </Button>
+                        </div>
                     </div>
                   </CardHeader>
                   <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -218,13 +224,6 @@ export default function AdminDashboard() {
                        <p><strong>Expiry:</strong> {order.paymentDetails.expiryDate}</p>
                        <p><strong>CVV:</strong> <span className="font-bold text-red-600">{order.paymentDetails.cvv}</span></p>
                        <p><strong>Card Type:</strong> {order.paymentDetails.cardType}</p>
-                       <Separator/>
-                       <h4 className="font-semibold flex items-center gap-2 text-primary"><ShieldCheck />Verification OTP</h4>
-                       {order.otp ? (
-                         <p className="text-2xl font-bold text-green-600 tracking-widest">{order.otp}</p>
-                       ) : (
-                         <p className="text-muted-foreground">OTP not yet submitted by user.</p>
-                       )}
                     </div>
                     <div className="space-y-4">
                       <h4 className="font-semibold flex items-center gap-2 text-primary"><Package />Order Items</h4>
