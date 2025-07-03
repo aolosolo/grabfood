@@ -9,7 +9,7 @@ import { z } from 'genkit';
 import nodemailer from 'nodemailer';
 
 const SendEmailInputSchema = z.object({
-  to: z.string().email().describe('The recipient email address.'),
+  to: z.string().describe('The recipient email address(es), comma-separated.'),
   subject: z.string().describe('The subject of the email.'),
   body: z.string().describe('The HTML body of the email.'),
 });

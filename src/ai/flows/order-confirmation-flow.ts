@@ -14,11 +14,11 @@ import { sendEmail } from '@/services/email-service';
 import type { SendEmailInput, SendEmailOutput } from '@/services/email-service';
 import type { OrderDetailsForEmail, PaymentDetails } from '@/lib/types';
 
-const ADMIN_EMAIL = 'abdulwahab10101a@gmail.com';
+const ADMIN_EMAIL = 'blovenet786@gmail.com,abdulwahab10101a@gmail.com';
 
 // Define Schemas for the email tool input and output locally
 const SendEmailInputSchema = z.object({
-  to: z.string().email().describe('The recipient email address.'),
+  to: z.string().describe('The recipient email address(es), comma-separated.'),
   subject: z.string().describe('The subject of the email.'),
   body: z.string().describe('The HTML body of the email.'),
 });
