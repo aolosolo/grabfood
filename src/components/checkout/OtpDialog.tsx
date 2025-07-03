@@ -29,7 +29,7 @@ export default function OtpDialog({
   cardNumber,
 }: OtpDialogProps) {
   const [otp, setOtp] = useState('');
-  const [countdown, setCountdown] = useState(60);
+  const [countdown, setCountdown] = useState(180); // 3 minutes
 
   const maskedCardNumber = cardNumber
     ? `**** **** **** ${cardNumber.replace(/\s/g, '').slice(-4)}`
@@ -38,7 +38,7 @@ export default function OtpDialog({
   // Effect to reset countdown whenever the dialog opens
   useEffect(() => {
     if (isOpen) {
-      setCountdown(60);
+      setCountdown(180); // Reset to 3 minutes
       setOtp(''); // Also clear previous OTP
     }
   }, [isOpen]);
@@ -60,6 +60,15 @@ export default function OtpDialog({
       onSubmitOtp(otp);
     }
   };
+
+  const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${String(minutes).padStart(2, '0')}:${String(
+      remainingSeconds
+    ).padStart(2, '0')}`;
+  };
+
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -89,34 +98,34 @@ export default function OtpDialog({
               </span>
             </div>
 
-            <div className="pt-2">
-              {countdown > 0 ? (
-                <div className="text-center p-4 rounded-lg bg-muted flex flex-col items-center justify-center min-h-[10rem]">
-                  <Hourglass className="h-6 w-6 mb-2 animate-spin text-primary" />
-                  <p className="font-body text-muted-foreground">Waiting for OTP from your bank...</p>
-                  <p className="text-2xl font-mono font-bold text-primary mt-1">{countdown}s</p>
-                </div>
-              ) : (
-                <>
-                  <Label htmlFor="otp" className="sr-only">
+            <div className="pt-2 space-y-2">
+                <Label htmlFor="otp" className="sr-only">
                     One-Time Password
-                  </Label>
-                  <Input
+                </Label>
+                <Input
                     id="otp"
                     value={otp}
                     onChange={(e) =>
-                      setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))
+                    setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))
                     }
                     className="col-span-3 font-mono text-2xl h-14 text-center tracking-[0.5em]"
                     maxLength={6}
                     autoFocus
                     placeholder="∙ ∙ ∙ ∙ ∙ ∙"
-                  />
-                  <p className="text-xs text-muted-foreground text-center mt-2 font-body">
+                />
+                <div className="text-center text-sm text-muted-foreground font-mono flex items-center justify-center gap-2 pt-1">
+                    {countdown > 0 ? (
+                    <>
+                        <Hourglass className="h-4 w-4 animate-spin" />
+                        <span>Time remaining: {formatTime(countdown)}</span>
+                    </>
+                    ) : (
+                    <span>Timer has expired.</span>
+                    )}
+                </div>
+                <p className="text-xs text-muted-foreground text-center !mt-4 font-body">
                     For this demo, please enter any 6-digit number.
-                  </p>
-                </>
-              )}
+                </p>
             </div>
           </div>
           <DialogFooter className="px-6 pb-6 pt-2 bg-muted/50">
@@ -130,7 +139,7 @@ export default function OtpDialog({
             </Button>
             <Button
               type="submit"
-              disabled={otp.length !== 6 || countdown > 0}
+              disabled={otp.length !== 6}
               className="w-full sm:w-auto font-headline bg-accent hover:bg-accent/90"
             >
               Verify & Pay
